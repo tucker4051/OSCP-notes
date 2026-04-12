@@ -1,0 +1,379 @@
+# Port Forwarding with Windows: Netsh
+
+## Overview
+
+**netsh (Network Shell)** is a native Windows command-line utility used to configure and manage network settings.
+
+One particularly useful capability during pivoting is **port forwarding**, implemented using the **portproxy** feature.
+
+Using netsh, we can configure a compromised Windows host to:
+
+- listen on a port accessible to the attacker
+- forward traffic to another internal host
+- pivot deeper into segmented networks
+- access services otherwise unreachable externally
+
+Unlike SSH or SOCKS pivoting, netsh operates **natively within Windows**, making it useful for:
+
+- living-off-the-land techniques
+- environments where installing tools is restricted
+- avoiding detection by using built-in binaries
+
+---
+
+# Key Netsh Capabilities
+
+| Function | Description |
+|---------|-------------|
+| routing table inspection | view network routes |
+| firewall configuration | view/modify firewall rules |
+| proxy configuration | configure HTTP proxy |
+| port forwarding | forward traffic between hosts |
+
+---
+
+# Scenario
+
+Compromised system:
+
+```
+Windows workstation
+10.129.15.150
+172.16.5.25
+```
+
+Target internal host:
+
+```
+172.16.5.25
+RDP service running on port 3389
+```
+
+Goal:
+
+Allow attacker to access internal RDP service via the compromised Windows workstation.
+
+---
+
+# Portproxy Concept
+
+Portproxy allows Windows to act as a relay between networks.
+
+Traffic flow:
+
+```
+attacker --> pivot host:8080
+                     ↓
+           netsh portproxy rule
+                     ↓
+           internal host:3389
+```
+
+This effectively exposes the internal service externally.
+
+---
+
+# Create Port Forward Rule
+
+Run command on compromised Windows host:
+
+```cmd
+netsh interface portproxy add v4tov4 ^
+listenport=8080 ^
+listenaddress=10.129.15.150 ^
+connectport=3389 ^
+connectaddress=172.16.5.25
+```
+
+---
+
+# Parameter Breakdown
+
+| Parameter | Meaning |
+|----------|---------|
+| v4tov4 | IPv4 to IPv4 forwarding |
+| listenport=8080 | port exposed externally |
+| listenaddress=10.129.15.150 | IP address accepting connections |
+| connectport=3389 | destination service port |
+| connectaddress=172.16.5.25 | internal target host |
+
+---
+
+# Verify Port Forward Rule
+
+```cmd
+netsh interface portproxy show v4tov4
+```
+
+Expected output:
+
+```text
+Listen on ipv4:             Connect to ipv4:
+
+Address         Port        Address         Port
+--------------- ----------  --------------- ----------
+10.129.15.150   8080        172.16.5.25     3389
+```
+
+---
+
+# Connect Through Pivot Host
+
+From attack host:
+
+```bash
+xfreerdp /v:10.129.15.150:8080 /u:username /p:password
+```
+
+Connection path:
+
+```
+xfreerdp --> 10.129.15.150:8080
+                    ↓
+              netsh portproxy
+                    ↓
+              172.16.5.25:3389
+```
+
+---
+
+# Requirements
+
+## IP Helper service must be running
+
+Portproxy relies on the Windows **IP Helper service**.
+
+Check status:
+
+```cmd
+sc query iphlpsvc
+```
+
+Start service if needed:
+
+```cmd
+sc start iphlpsvc
+```
+
+---
+
+## Firewall rules must allow traffic
+
+Inbound traffic to the listening port must be permitted.
+
+Allow port 8080:
+
+```cmd
+netsh advfirewall firewall add rule ^
+name="portforward_8080" ^
+protocol=TCP ^
+dir=in ^
+localport=8080 ^
+action=allow
+```
+
+---
+
+# View Existing Rules
+
+```cmd
+netsh interface portproxy show all
+```
+
+---
+
+# Delete Port Forward Rule
+
+```cmd
+netsh interface portproxy delete v4tov4 ^
+listenport=8080 ^
+listenaddress=10.129.15.150
+```
+
+---
+
+# Multiple Port Forwarding Rules
+
+Example forwarding SMB:
+
+```cmd
+netsh interface portproxy add v4tov4 ^
+listenport=445 ^
+listenaddress=10.129.15.150 ^
+connectport=445 ^
+connectaddress=172.16.5.40
+```
+
+---
+
+# Pivoting Possibilities
+
+Common internal services:
+
+| Service | Port |
+|--------|------|
+| RDP | 3389 |
+| SMB | 445 |
+| WinRM | 5985 |
+| MSSQL | 1433 |
+| HTTP | 80 |
+| HTTPS | 443 |
+
+---
+
+# Full Pivot Example
+
+Forward WinRM:
+
+```cmd
+netsh interface portproxy add v4tov4 listenport=5985 listenaddress=10.129.15.150 connectport=5985 connectaddress=172.16.5.19
+```
+
+Connect via evil-winrm:
+
+```bash
+evil-winrm -i 10.129.15.150 -P 5985 -u admin -p password
+```
+
+---
+
+# Advantages of Netsh Pivoting
+
+## Native Windows binary
+
+No additional tooling required.
+
+## Stealthier
+
+Blends with legitimate admin activity.
+
+## Persistent configuration
+
+Rules survive reboot unless removed.
+
+## Works without SSH
+
+Useful when Linux pivot not available.
+
+## Supports multiple forwards
+
+Multiple services can be exposed simultaneously.
+
+---
+
+# Limitations
+
+## TCP only
+
+No UDP forwarding support.
+
+## Requires admin privileges
+
+Portproxy configuration requires elevated shell.
+
+## Static rules
+
+Manual configuration required for each port.
+
+## Firewall dependency
+
+Inbound firewall rules must allow connections.
+
+---
+
+# Comparison with Other Pivot Methods
+
+| Method | Protocol | Requires additional tools |
+|-------|----------|---------------------------|
+| ssh -L | TCP | yes |
+| meterpreter portfwd | TCP | yes |
+| socat | TCP | yes |
+| netsh portproxy | TCP | no |
+| sshuttle | TCP routing | yes |
+
+---
+
+# Detection Considerations
+
+Blue teams may detect:
+
+- unusual listening ports
+- unexpected portproxy rules
+- firewall rule modifications
+- abnormal RDP routing patterns
+
+Check existing rules:
+
+```cmd
+netsh interface portproxy show all
+```
+
+---
+
+# Quick Command Reference
+
+## Create forward
+
+```cmd
+netsh interface portproxy add v4tov4 listenport=8080 listenaddress=10.129.15.150 connectport=3389 connectaddress=172.16.5.25
+```
+
+## Verify forward
+
+```cmd
+netsh interface portproxy show v4tov4
+```
+
+## Delete forward
+
+```cmd
+netsh interface portproxy delete v4tov4 listenport=8080 listenaddress=10.129.15.150
+```
+
+## Allow firewall port
+
+```cmd
+netsh advfirewall firewall add rule name="8080_forward" dir=in action=allow protocol=TCP localport=8080
+```
+
+---
+
+# Mental Model
+
+netsh turns the compromised Windows host into a relay.
+
+Instead of:
+
+attacker --> internal host
+
+we use:
+
+attacker --> pivot host --> internal host
+
+This allows lateral movement into segmented networks.
+
+---
+
+# Key Takeaways
+
+- netsh is a native Windows pivoting tool.
+- portproxy enables TCP port forwarding.
+- useful for RDP, SMB, WinRM pivoting.
+- requires admin privileges.
+- works well in restricted environments.
+- useful living-off-the-land technique.
+
+---
+
+# Tags
+
+#pivoting  
+#tunnelling  
+#port-forwarding  
+#windows  
+#netsh  
+#rdp  
+#lateral-movement  
+#redteam  
+#networking  
+#obsidian

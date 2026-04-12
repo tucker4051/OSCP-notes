@@ -1,0 +1,356 @@
+# Interactive Shells — Spawn Techniques
+
+## Overview
+
+After gaining initial access (reverse shell, web shell, command injection), the shell may be:
+
+- non-interactive
+- unstable
+- lacking job control
+- missing tab completion
+- missing stderr output
+- unable to run certain commands (sudo, su, ssh)
+
+Upgrading to an interactive shell improves:
+
+- usability
+- command reliability
+- privilege escalation capability
+- scripting flexibility
+
+---
+
+## Common Shell Locations
+
+Typical shell binaries:
+
+```bash
+/bin/sh
+/bin/bash
+/bin/dash
+/bin/zsh
+/usr/bin/bash
+```
+
+If unsure which shells exist:
+
+```bash
+cat /etc/shells
+```
+
+---
+
+# 1. Basic Interactive Shell
+
+```bash
+/bin/sh -i
+```
+
+or
+
+```bash
+/bin/bash -i
+```
+
+### Notes
+
+- `-i` forces interactive mode
+- often works when command execution is possible
+- may show:
+
+```text
+sh: no job control in this shell
+```
+
+Still usable.
+
+---
+
+# 2. Perl Shell
+
+If Perl is installed:
+
+```bash
+perl -e 'exec "/bin/sh";'
+```
+
+Alternative:
+
+```bash
+perl -e 'exec "/bin/bash";'
+```
+
+---
+
+# 3. Ruby Shell
+
+If Ruby is available:
+
+```bash
+ruby -e 'exec "/bin/sh"'
+```
+
+---
+
+# 4. Lua Shell
+
+Lua can execute OS commands:
+
+```bash
+lua -e 'os.execute("/bin/sh")'
+```
+
+---
+
+# 5. AWK Shell
+
+AWK can spawn a shell using system():
+
+```bash
+awk 'BEGIN {system("/bin/sh")}'
+```
+
+---
+
+# 6. Find Shell
+
+Find can execute commands.
+
+### Using awk inside find
+
+```bash
+find / -name file -exec /bin/awk 'BEGIN {system("/bin/sh")}' \;
+```
+
+---
+
+### Direct shell execution via find
+
+```bash
+find . -exec /bin/sh \; -quit
+```
+
+Notes:
+
+- `-exec` executes command
+- `-quit` stops find after execution
+- useful when shell access is restricted
+
+---
+
+# 7. VIM Shell Escape
+
+If vim is available:
+
+```bash
+vim -c ':!/bin/sh'
+```
+
+---
+
+### Interactive escape
+
+```bash
+vim
+```
+
+Inside vim:
+
+```vim
+:set shell=/bin/sh
+:shell
+```
+
+---
+
+# 8. Checking Available Interpreters
+
+Useful checks:
+
+```bash
+which python
+which python3
+which perl
+which ruby
+which lua
+which awk
+which vim
+```
+
+---
+
+# 9. Checking Permissions
+
+Understanding permissions helps identify:
+
+- executable binaries
+- privilege escalation vectors
+- writable scripts
+- SUID binaries
+
+---
+
+## File Permissions
+
+```bash
+ls -la /path/to/file
+```
+
+Example output:
+
+```text
+-rwsr-xr-x 1 root root 167K file
+```
+
+Important bits:
+
+| Flag | Meaning |
+|------|---------|
+| r | read |
+| w | write |
+| x | execute |
+| s | SUID |
+
+---
+
+## Check Sudo Permissions
+
+```bash
+sudo -l
+```
+
+Example:
+
+```text
+User apache may run the following commands:
+
+(ALL : ALL) NOPASSWD: ALL
+```
+
+Meaning:
+
+user can execute commands as root without password.
+
+---
+
+## Note on sudo -l
+
+Requires stable interactive shell.
+
+If shell is unstable, upgrade first.
+
+---
+
+# 10. When These Are Useful
+
+Common situations:
+
+- command injection
+- webshell access
+- reverse shell without tty
+- limited restricted shell
+- container escape attempts
+- privilege escalation staging
+
+---
+
+# 11. Quick Methodology
+
+After initial access:
+
+1. attempt interactive shell
+2. check available interpreters
+3. upgrade shell stability
+4. check permissions
+5. check sudo rights
+6. enumerate privilege escalation paths
+
+---
+
+# Cheatsheet
+
+## Basic interactive shell
+
+```bash
+/bin/sh -i
+/bin/bash -i
+```
+
+---
+
+## Perl
+
+```bash
+perl -e 'exec "/bin/sh";'
+```
+
+---
+
+## Ruby
+
+```bash
+ruby -e 'exec "/bin/sh"'
+```
+
+---
+
+## Lua
+
+```bash
+lua -e 'os.execute("/bin/sh")'
+```
+
+---
+
+## AWK
+
+```bash
+awk 'BEGIN {system("/bin/sh")}'
+```
+
+---
+
+## Find
+
+```bash
+find . -exec /bin/sh \; -quit
+```
+
+---
+
+## Vim
+
+```bash
+vim -c ':!/bin/sh'
+```
+
+Inside vim:
+
+```vim
+:set shell=/bin/sh
+:shell
+```
+
+---
+
+## Permissions
+
+```bash
+ls -la file
+sudo -l
+```
+
+---
+
+# Related Notes
+
+- Reverse shells
+- TTY upgrade techniques
+- GTFOBins shell escapes
+- privilege escalation enumeration
+
+---
+
+# Tags
+
+#shells #linux #interactive-shell #privilege-escalation #gtfobins #oscp

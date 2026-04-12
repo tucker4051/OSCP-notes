@@ -1,0 +1,638 @@
+# Linux Remote Management Protocols  
+  
+## Overview  
+  
+This note covers common **Linux remote management protocols** you may encounter during enumeration:  
+  
+- **SSH**  
+- **Rsync**  
+- **R-Services**  
+  
+These services are important because they often provide:  
+  
+- remote administration access  
+- file transfer capability  
+- credential attack surface  
+- pivoting opportunities  
+- evidence of weak legacy configurations  
+  
+---  
+  
+# SSH  
+  
+## Overview  
+  
+**Secure Shell (SSH)** enables two systems to establish an **encrypted remote connection** over an untrusted network, usually on **TCP port 22**.  
+  
+The most common implementation on Linux is **OpenSSH**, which is an open-source fork of the original commercial SSH implementation.  
+  
+SSH is commonly used for:  
+  
+- remote administration  
+- command execution  
+- secure file transfer  
+- tunnelling and port forwarding  
+- automation and scripting  
+  
+Think of SSH as the secure replacement for older plaintext remote access protocols like Telnet and R-Services.  
+  
+---  
+  
+## SSH Versions  
+  
+There are two protocol generations:  
+  
+- **SSH-1**  
+- **SSH-2**  
+  
+### Why this matters  
+  
+**SSH-1** is obsolete and insecure.    
+It is vulnerable to weaknesses including **man-in-the-middle attacks**.  
+  
+**SSH-2** is the modern standard and provides:  
+  
+- stronger encryption  
+- improved integrity protection  
+- better key exchange  
+- better stability and security  
+  
+If you see **Protocol 1** enabled, treat it as a significant weakness.  
+  
+---  
+  
+## OpenSSH Authentication Methods  
+  
+OpenSSH supports multiple authentication methods:  
+  
+- Password authentication  
+- Public-key authentication  
+- Host-based authentication  
+- Keyboard authentication  
+- Challenge-response authentication  
+- GSSAPI authentication  
+  
+During enumeration, you want to understand **which methods are enabled**, because this directly affects attack paths.  
+  
+For example:  
+  
+- password auth may allow brute force or spraying  
+- public key auth may allow key re-use attacks  
+- GSSAPI may indicate Kerberos integration  
+- challenge-response may imply MFA or PAM-backed auth  
+  
+---  
+  
+## Reviewing Effective SSH Configuration  
+  
+A quick way to review only the active SSH settings is:  
+  
+```bash  
+cat /etc/ssh/sshd_config | grep -v "#" | sed -r '/^\s*$/d'
+```
+
+### What this does
+
+- `grep -v "#"` removes comments
+- `sed -r '/^\s*$/d'` removes blank lines
+
+This leaves only the effective configuration entries, making the file much easier to review during assessment.
+
+---
+
+## Dangerous SSH Settings
+
+The following settings are especially important during enumeration:
+
+|Setting|Description|
+|---|---|
+|`PasswordAuthentication yes`|Allows password-based authentication|
+|`PermitEmptyPasswords yes`|Allows empty passwords|
+|`PermitRootLogin yes`|Allows direct root login|
+|`Protocol 1`|Enables insecure SSH-1|
+|`X11Forwarding yes`|Allows forwarding of GUI apps|
+|`AllowTcpForwarding yes`|Allows TCP port forwarding|
+|`PermitTunnel yes`|Allows tunnelling|
+|`DebianBanner yes`|Exposes OS/banner information|
+
+### Why these matter
+
+- `PasswordAuthentication yes` means brute force or password spraying may be possible.
+- `PermitEmptyPasswords yes` is extremely dangerous and may allow access with blank passwords.
+- `PermitRootLogin yes` means a successful credential attack gives immediate root access.
+- `Protocol 1` suggests outdated cryptography and poor hardening.
+- `X11Forwarding yes` may allow GUI forwarding and can help with lateral movement or data access.
+- `AllowTcpForwarding yes` may allow tunnelling, pivoting, or internal reachability abuse.
+- `PermitTunnel yes` can enable network tunnelling.
+- `DebianBanner yes` exposes extra fingerprinting information.
+
+---
+
+## SSH Enumeration with Nmap
+
+Basic version detection:
+
+sudo nmap -sV -p 22 {target IP}
+
+Default scripts plus version detection:
+
+sudo nmap -sC -sV -p 22 {target IP}
+
+### Why use this
+
+This can reveal:
+
+- OpenSSH version
+- OS hints
+- banner details
+- host key information
+- sometimes authentication and algorithm clues
+
+A vulnerable or outdated SSH version may point to:
+
+- exploit research opportunities
+- poor patching
+- legacy crypto
+- weak configuration
+
+---
+
+## SSH Fingerprinting with ssh-audit
+
+A very useful tool for evaluating SSH security posture is `ssh-audit`.
+
+Clone it:
+
+git clone https://github.com/jtesta/ssh-audit.git && cd ssh-audit
+
+Run it:
+
+./ssh-audit.py {target IP}
+
+### What ssh-audit helps identify
+
+- weak ciphers
+- deprecated key exchange methods
+- legacy protocol support
+- weak MAC algorithms
+- insecure host key algorithms
+- banner details
+- version-specific weaknesses
+
+This gives a much better security picture than a simple port scan alone.
+
+---
+
+## Forcing Password Authentication
+
+Sometimes the SSH client tries public-key authentication first, which can clutter output or confuse testing.
+
+To force password authentication:
+
+ssh -v {user}@{target IP} -o PreferredAuthentications=password
+
+### Why this is useful
+
+- helps confirm whether password auth is allowed
+- avoids confusion from automatic key attempts
+- `-v` gives verbose output showing the authentication negotiation process
+
+This is especially useful during password attack validation.
+
+---
+
+## Logging in with SSH Keys
+
+If you capture an SSH private key, fix the permissions first:
+
+chmod 600 id_rsa
+
+Then connect with:
+
+ssh -i id_rsa {user}@{target IP}
+
+### Why the permission change matters
+
+OpenSSH refuses to use private keys that are too broadly readable.  
+`chmod 600` ensures the key is readable only by the current user.
+
+If permissions are too open, SSH will reject the key even if it is valid.
+
+---
+
+# Rsync
+
+## Overview
+
+Rsync is a fast and efficient file synchronisation and transfer tool used both locally and remotely.
+
+It is commonly used for:
+
+- backups
+- file replication
+- mirrored directories
+- admin automation
+- deployment workflows
+
+By default, rsync uses **TCP port 873** when operating as an rsync daemon.
+
+It can also run over SSH.
+
+Think of rsync like a very efficient copy tool that transfers only file differences where possible.
+
+---
+
+## Why Rsync Matters in Enumeration
+
+Rsync can expose:
+
+- anonymous shares
+- backup files
+- sensitive configs
+- scripts
+- keys
+- writable modules
+
+An exposed rsync daemon can be just as valuable as an open SMB or NFS share.
+
+---
+
+## Scanning for Rsync
+
+Basic scan:
+
+sudo nmap -sV -p 873 {target IP}
+
+### What this may reveal
+
+- rsync daemon presence
+- version details
+- confirmation that port 873 is open
+
+---
+
+## Probing the Rsync Service
+
+Manual connection test:
+
+`nc -nv {target IP} 873`
+
+Alternative:
+
+`telnet <host> 873`
+
+### Why do this
+
+This helps confirm:
+
+- whether the service is live
+- whether it responds like an rsync daemon
+- whether manual interaction is possible
+
+---
+
+## Enumerating an Open Share
+
+List files in a known share:
+
+`rsync -av --list-only rsync://{target IP}/dev`
+
+Another enumeration form:
+
+`rsync rsync://<host>/<share>`
+
+Example:
+
+`rsync rsync://10.129.160.186/public`
+
+### Why this is useful
+
+This tells you:
+
+- whether anonymous read access exists
+- what files and directories are present
+- whether sensitive files are exposed
+- whether backup leakage is likely
+
+---
+
+## Downloading Files or Directories
+
+Download a specific file or folder:
+
+`rsync -av rsync://<host>/<share>/<file_or_folder>`
+
+Examples:
+
+`rsync -av rsync://10.129.160.186/public/flag.txt`
+`rsync -av rsync://10.129.160.186/public/`
+
+### What this does
+
+- `-a` = archive mode
+- `-v` = verbose
+- `.` = save into the current local directory
+
+Download an entire share recursively:
+
+`rsync -av rsync://<host>/<share>/`
+
+---
+
+## Uploading Files or Directories
+
+If write access is allowed:
+
+`rsync -av <file_or_folder> rsync://<host>/<share>/`
+
+### Why this matters
+
+Writable rsync shares can allow:
+
+- dropping files
+- replacing scripts
+- planting backdoors
+- modifying deployment content
+- altering backups
+
+This is uncommon in mature environments, but a strong finding when present.
+
+---
+
+## Useful Rsync Flags
+
+|Flag|Meaning|
+|---|---|
+|`-a`|Archive mode; preserves timestamps, permissions, symlinks, etc.|
+|`-v`|Verbose output|
+|`-z`|Compress data during transfer|
+|`--progress`|Show progress in real time|
+|`--dry-run`|Simulate actions without changing anything|
+
+Example with compression and progress:
+
+`rsync -avz --progress rsync://<host>/<share>/`
+
+Safe test run:
+
+`rsync -av --dry-run rsync://<host>/<share>/`
+
+### Why `--dry-run` is useful
+
+It lets you see what would happen without actually transferring or modifying anything.
+
+---
+
+## Rsync over SSH
+
+Rsync can also operate over SSH instead of port 873.
+
+Example:
+
+`rsync -av -e "ssh -p2222" <source> <destination>`
+
+### Why this matters
+
+Sometimes:
+
+- rsync daemon mode is not exposed
+- but rsync is still available via SSH
+- and valid SSH credentials may give access to remote file transfer
+
+---
+
+# R-Services
+
+## Overview
+
+R-Services are legacy Unix remote access protocols that predate SSH.
+
+They are insecure because they:
+
+- transmit data in cleartext
+- rely heavily on host trust relationships
+- can bypass strong authentication under bad configurations
+
+Finding R-Services usually suggests:
+
+- legacy infrastructure
+- poor hardening
+- outdated administration practices
+- easy lateral movement opportunities
+
+---
+
+## Common R-Services Ports
+
+|Port|Service|
+|---|---|
+|`512`|`rexec`|
+|`513`|`rlogin`|
+|`514`|`rsh / rcp`|
+
+---
+
+## R-Commands Suite
+
+The main client-side tools are:
+
+- `rcp` — remote copy
+- `rexec` — remote execution
+- `rlogin` — remote login
+- `rsh` — remote shell
+- `rstat`
+- `ruptime`
+- `rwho` — remote who
+
+---
+
+## R-Commands and Their Functions
+
+|Command|Service Daemon|Port|Protocol|Description|
+|---|---|---|---|---|
+|`rcp`|`rshd`|514|TCP|Copies files/directories between systems|
+|`rsh`|`rshd`|514|TCP|Opens a shell without a normal login procedure|
+|`rexec`|`rexecd`|512|TCP|Executes commands remotely using username/password|
+|`rlogin`|`rlogind`|513|TCP|Opens an interactive remote login session|
+
+---
+
+## Trust Relationships
+
+R-Services often bypass normal authentication using:
+
+- `/etc/hosts.equiv`
+- `.rhosts`
+
+### `/etc/hosts.equiv`
+
+A system-wide trusted hosts file.
+
+### `.rhosts`
+
+A per-user trust file.
+
+If these are misconfigured, a system may trust a remote client based only on hostname or username assertions.
+
+### Why this is dangerous
+
+This means access may be granted without requiring a password, depending on trust settings.
+
+That is one of the main reasons R-Services are considered insecure and obsolete.
+
+---
+
+## Scanning for R-Services
+
+Use Nmap:
+
+`sudo nmap -sV -p 512,513,514 {target IP}`
+
+### What you are looking for
+
+- `rexecd`
+- `rlogind`
+- `rshd`
+
+Presence of these services should be treated as a major finding.
+
+---
+
+## Logging in with Rlogin
+
+`rlogin {target IP} -l {user}`
+
+### Why this matters
+
+If trust relationships are weak, access may be granted without a password.
+
+---
+
+## Listing Authenticated Users with Rwho
+
+`rwho` lists interactive sessions on the local network.
+
+This can help identify:
+
+- valid usernames
+- active users
+- target systems in use
+
+---
+
+## Listing Authenticated Users with Rusers
+
+More detailed enumeration:
+
+`rusers -al {target IP}`
+
+### Information revealed
+
+- username
+- logged-in host
+- terminal/TTY
+- login time
+- idle time
+- source host
+
+This can be extremely useful for identifying live targets and potential trust paths.
+
+---
+
+# Quick Commands
+
+## SSH
+
+```
+sudo nmap -sV -sC -p 22 {target IP}`  
+cat /etc/ssh/sshd_config | grep -v "#" | sed -r '/^\s*$/d'
+git clone https://github.com/jtesta/ssh-audit.git && cd ssh-audit
+./ssh-audit.py {target IP}`  
+ssh -v {user}@{target IP} -o PreferredAuthentications=password
+chmod 600 id_rsa`  
+ssh -i id_rsa {user}@{target IP}
+```
+
+## Rsync
+
+```
+sudo nmap -sV -p 873 {target IP}  
+nc -nv {target IP} 873  
+telnet <host> 873  
+rsync -av --list-only rsync://{target IP}/dev  
+rsync rsync://<host>/<share>  
+rsync -av rsync://<host>/<share>/<file_or_folder> .  
+rsync -av rsync://<host>/<share>/ .  
+rsync -av <file_or_folder> rsync://<host>/<share>/  
+rsync -av -e "ssh -p2222" <source> <destination>
+```
+
+
+## R-Services
+
+```
+sudo nmap -sV -p 512,513,514 {target IP}  
+rlogin {target IP} -l {user}  
+rwho  
+rusers -al {target IP}
+```
+
+---
+
+# Enumeration Priorities
+
+When you find these services, focus on the following.
+
+## SSH
+
+- version
+- authentication methods
+- password authentication
+- root login
+- forwarding options
+- reusable private keys
+- weak crypto
+
+## Rsync
+
+- anonymous shares
+- readable data
+- writable shares
+- backup leakage
+- config exposure
+- deployment scripts
+
+## R-Services
+
+- exposed legacy daemons
+- trust relationships
+- passwordless access
+- active user enumeration
+- lateral movement potential
+
+---
+
+# High-Value Findings
+
+- `PermitRootLogin yes`
+- `PermitEmptyPasswords yes`
+- SSH protocol 1 enabled
+- password authentication enabled where it should not be
+- open rsync shares with sensitive files
+- writable rsync shares/modules
+- exposed `rlogin`, `rsh`, or `rexec`
+- trust files allowing passwordless access
+- active user sessions exposed via `rusers`
+
+---
+
+# Tags
+
+#enumeration  
+#linux  
+#ssh  
+#rsync  
+#rservices  
+#remote-management  
+#nmap  
+#obsidian

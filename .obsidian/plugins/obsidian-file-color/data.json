@@ -1,0 +1,186 @@
+{
+  "cascadeColors": false,
+  "colorBackground": false,
+  "palette": [
+    {
+      "id": "xEP92qFm6gNRsia9zN5rR",
+      "name": "Rosewater",
+      "value": "#f2d5cf"
+    },
+    {
+      "id": "yho-4vaaBLXUjf_5y9Qei",
+      "name": "Flamingo",
+      "value": "#eebebe"
+    },
+    {
+      "id": "1bNz4MQXB8J8ZoFppOkF0",
+      "name": "Pink",
+      "value": "#f4b8e4"
+    },
+    {
+      "id": "r5Vdm8_tj9toO86m1Zv75",
+      "name": "Mauve",
+      "value": "#ca9ee6"
+    },
+    {
+      "id": "kcNyiuFITQebEw2NuBdpi",
+      "name": "Red",
+      "value": "#e78284"
+    },
+    {
+      "id": "Af3zCtM3EEHiHJmHb0eEO",
+      "name": "Maroon",
+      "value": "#ea999c"
+    },
+    {
+      "id": "OfEPmG5FohAfJWLtrXGjS",
+      "name": "Peach",
+      "value": "#ef9f76"
+    },
+    {
+      "id": "tOrlg72Ey1lxtpwB-hEbI",
+      "name": "Yellow",
+      "value": "#e5c890"
+    },
+    {
+      "id": "W3rbf8NYDKjNckRCXk0u_",
+      "name": "Green",
+      "value": "#a6d189"
+    },
+    {
+      "id": "Rt7xQpQWbB2B2OJ2juCf0",
+      "name": "Teal",
+      "value": "#81c8be"
+    },
+    {
+      "id": "QFrLiwimtqJp_seXT_Jth",
+      "name": "Sky",
+      "value": "#99d1db"
+    },
+    {
+      "id": "XLQl_o4Y3piAjKB0A_6gP",
+      "name": "Sapphire",
+      "value": "#85c1dc"
+    },
+    {
+      "id": "ftpb0DzydzCY1hdJfmqM7",
+      "name": "Blue",
+      "value": "#8caaee"
+    },
+    {
+      "id": "1sTFxjEVgSfPBD7CWLdvp",
+      "name": "Lavendar",
+      "value": "#babbf1"
+    }
+  ],
+  "fileColors": [
+    {
+      "path": "Knowledge Book/Enumeration",
+      "color": "yho-4vaaBLXUjf_5y9Qei"
+    },
+    {
+      "path": "Knowledge Book/Tools & Quick Commands",
+      "color": "Rt7xQpQWbB2B2OJ2juCf0"
+    },
+    {
+      "path": "Knowledge Book/Vulnerability Scanning",
+      "color": "r5Vdm8_tj9toO86m1Zv75"
+    },
+    {
+      "path": "Knowledge Book/File Transfers",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "Knowledge Book/Shells & Payloads",
+      "color": "tOrlg72Ey1lxtpwB-hEbI"
+    },
+    {
+      "path": "Knowledge Book/Metasploit",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "Knowledge Book/Password Attacks",
+      "color": "OfEPmG5FohAfJWLtrXGjS"
+    },
+    {
+      "path": "Knowledge Book/Attacking Services",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "Knowledge Book/Pivoting, Tunnelling, Port Forwarding",
+      "color": "1bNz4MQXB8J8ZoFppOkF0"
+    },
+    {
+      "path": "Knowledge Book/Active Directory",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "Knowledge Book/SQL Injection",
+      "color": "Af3zCtM3EEHiHJmHb0eEO"
+    },
+    {
+      "path": "Knowledge Book/XSS",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "Knowledge Book/File Inclusion",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "Knowledge Book/File Upload Attacks",
+      "color": "Af3zCtM3EEHiHJmHb0eEO"
+    },
+    {
+      "path": "Knowledge Book/Command Injections",
+      "color": "r5Vdm8_tj9toO86m1Zv75"
+    },
+    {
+      "path": "Knowledge Book/Attacking Apps",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "Knowledge Book/Web Attacks",
+      "color": "OfEPmG5FohAfJWLtrXGjS"
+    },
+    {
+      "path": "Knowledge Book/Privilege Escalation",
+      "color": "Rt7xQpQWbB2B2OJ2juCf0"
+    },
+    {
+      "path": "Knowledge Book/Privilege Escalation/Linux",
+      "color": "xEP92qFm6gNRsia9zN5rR"
+    },
+    {
+      "path": "Knowledge Book/Privilege Escalation/Windows",
+      "color": "yho-4vaaBLXUjf_5y9Qei"
+    },
+    {
+      "path": "Knowledge Book",
+      "color": "Rt7xQpQWbB2B2OJ2juCf0"
+    },
+    {
+      "path": "Labs",
+      "color": "xEP92qFm6gNRsia9zN5rR"
+    },
+    {
+      "path": "Labs/Twiggy",
+      "color": "tOrlg72Ey1lxtpwB-hEbI"
+    },
+    {
+      "path": "Labs/Exfiltrated",
+      "color": "tOrlg72Ey1lxtpwB-hEbI"
+    },
+    {
+      "path": "Temp Course Notes",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "/",
+      "color": "XLQl_o4Y3piAjKB0A_6gP"
+    },
+    {
+      "path": "Knowledge Book/Exploits",
+      "color": "XLQl_o4Y3piAjKB0A_6gP"
+    }
+  ]
+}

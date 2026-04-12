@@ -1,0 +1,18 @@
+# enum4linux-ng
+
+## Purpose
+Automated SMB enumeration wrapper.
+
+## Common Commands
+
+### Full enumeration
+`enum4linux-ng -A <target>
+
+### Null session enumeration
+`enum4linux-ng -A -u "" -p "" <target>
+
+### Output to file
+`enum4linux-ng -A <target> -oA enum_results
+
+## Notes
+Good quick overview of SMB environment.

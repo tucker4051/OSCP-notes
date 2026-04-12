@@ -1,0 +1,707 @@
+# Attacking Common Services – Email Services
+
+## Overview
+
+Mail servers handle the sending, receiving, storing, and forwarding of email messages across networks.
+
+Core roles:
+
+- receive email from clients
+- forward email to other mail servers
+- store messages for users
+- deliver messages to client devices
+
+Common client devices:
+
+- laptops
+- desktops
+- phones
+- tablets
+
+When a user sends an email, their mail client usually connects to an **SMTP** server.
+
+When a user retrieves email, their client usually connects to **POP3** or **IMAP4**.
+
+Think of SMTP as the postal dispatch office, while POP3 and IMAP4 are the mail collection desks.
+
+---
+
+# 1. Core Mail Protocols
+
+## SMTP
+
+**Simple Mail Transfer Protocol** is used for:
+
+- sending email from client to server
+- relaying email between servers
+
+SMTP is primarily a **sending** protocol.
+
+---
+
+## POP3
+
+**Post Office Protocol v3** is used for retrieving email.
+
+Default behaviour:
+
+- downloads messages locally
+- often removes them from server after download
+
+Implication:
+
+- less convenient across multiple devices
+
+---
+
+## IMAP4
+
+**Internet Message Access Protocol v4** is also used for retrieving email.
+
+Default behaviour:
+
+- keeps messages on the server
+- synchronises across devices
+
+Implication:
+
+- better for multi-device access
+- more common in modern environments
+
+---
+
+# 2. Why Email Enumeration Matters
+
+Mail environments are often complex.
+
+Challenges include:
+
+- multiple hosts
+- multiple protocols
+- cloud-hosted email platforms
+- hybrid deployments
+- protocol-specific misconfigurations
+
+Modern organisations often use cloud providers such as:
+
+- Microsoft 365
+- Google Workspace
+- Zoho
+
+Attack paths differ depending on whether the mail service is:
+
+1. cloud-hosted
+2. self-hosted / custom
+3. hybrid
+
+Identifying the provider changes the enumeration strategy.
+
+---
+
+# 3. MX Record Enumeration
+
+The **MX (Mail eXchanger) DNS record** identifies which mail server accepts email for a domain.
+
+This is one of the fastest ways to profile a target's email setup.
+
+## Using `host`
+
+```bash
+host -t MX hackthebox.eu
+host -t MX microsoft.com
+```
+
+## Using `dig`
+
+```bash
+dig mx plaintext.do | grep "MX" | grep -v ";"
+dig mx inlanefreight.com | grep "MX" | grep -v ";"
+```
+
+## Resolving A record for mail host
+
+```bash
+host -t A mail1.inlanefreight.htb
+```
+
+## Why this matters
+
+MX records can reveal:
+
+- Google Workspace
+- Microsoft 365
+- Zoho
+- custom/self-hosted infrastructure
+
+Examples:
+
+- `aspmx.l.google.com` → Google Workspace
+- `*.mail.protection.outlook.com` → Microsoft 365
+- `mx.zoho.com` → Zoho
+- internal hostname like `mail1.domain.tld` → likely custom server
+
+This determines whether you should focus on:
+
+- cloud username enumeration
+- protocol attacks
+- misconfiguration testing
+- password spraying
+
+---
+
+# 4. Common Mail Ports
+
+If the target appears to use a custom mail server, enumerate the common mail ports.
+
+| Port | Service |
+|------|---------|
+| TCP/25 | SMTP Unencrypted |
+| TCP/110 | POP3 Unencrypted |
+| TCP/143 | IMAP4 Unencrypted |
+| TCP/465 | SMTP Encrypted |
+| TCP/587 | SMTP with STARTTLS / Submission |
+| TCP/993 | IMAP4 Encrypted |
+| TCP/995 | POP3 Encrypted |
+
+## Nmap enumeration
+
+```bash
+sudo nmap -Pn -sV -sC -p25,110,143,465,587,993,995 <TARGET_IP>
+```
+
+## Why this matters
+
+This can reveal:
+
+- mail software in use
+- supported commands
+- insecure features
+- protocol exposure
+- possible username enumeration vectors
+
+Example useful Nmap script output:
+
+```text
+smtp-commands: PIPELINING, VRFY, ETRN, ENHANCEDSTATUSCODES, SMTPUTF8
+```
+
+If `VRFY` is enabled, that is immediately interesting.
+
+---
+
+# 5. Common Email Misconfigurations
+
+Mail services often become vulnerable through misconfiguration rather than software flaws.
+
+Common issues:
+
+- anonymous SMTP interaction
+- valid user enumeration
+- weak authentication
+- open relay configuration
+- exposed legacy protocols
+- poor lockout / throttling
+
+Two major areas to test:
+
+1. **username enumeration**
+2. **password attacks**
+
+---
+
+# 6. SMTP Username Enumeration
+
+SMTP supports several commands that may reveal valid usernames.
+
+Key commands:
+
+- `VRFY`
+- `EXPN`
+- `RCPT TO`
+
+These can be useful for:
+
+- building valid user lists
+- password spraying
+- credential guessing
+- phishing prep
+- social engineering
+
+---
+
+## `VRFY`
+
+Checks whether a particular user exists.
+
+### Manual example
+
+```bash
+telnet <TARGET_IP> 25
+```
+
+Then:
+
+```text
+VRFY root
+VRFY www-data
+VRFY new-user
+```
+
+### Typical behaviour
+
+- valid user → success-style response
+- invalid user → rejected / unknown user response
+
+### Why it matters
+
+It can confirm local accounts or mailbox identities without authentication.
+
+---
+
+## `EXPN`
+
+Expands aliases or mailing lists.
+
+### Manual example
+
+```bash
+telnet <TARGET_IP> 25
+```
+
+Then:
+
+```text
+EXPN john
+EXPN support-team
+```
+
+### Why it matters
+
+This can reveal:
+
+- individual mailboxes
+- members of distribution lists
+- internal naming conventions
+- staff identities
+
+`EXPN` is often more dangerous than `VRFY` because it may expose groups.
+
+---
+
+## `RCPT TO`
+
+Tests whether a recipient address is accepted.
+
+### Manual example
+
+```bash
+telnet <TARGET_IP> 25
+```
+
+Then:
+
+```text
+MAIL FROM:test@htb.com
+RCPT TO:julio
+RCPT TO:kate
+RCPT TO:john
+```
+
+### Why it matters
+
+If the server accepts valid recipients and rejects invalid ones, you can enumerate users indirectly.
+
+This is often one of the most practical methods.
+
+---
+
+# 7. POP3 User Enumeration
+
+Some POP3 services allow username probing.
+
+### Manual example
+
+```bash
+telnet <TARGET_IP> 110
+```
+
+Then:
+
+```text
+USER julio
+USER john
+```
+
+### Typical behaviour
+
+- valid username → `+OK`
+- invalid username → `-ERR`
+
+### Why it matters
+
+This can confirm valid accounts without needing a password.
+
+POP3 implementations vary, so behaviour is service-dependent.
+
+---
+
+# 8. Automating SMTP Enumeration
+
+A common tool is:
+
+```bash
+smtp-user-enum
+```
+
+It supports multiple enumeration modes.
+
+## Example using RCPT
+
+```bash
+smtp-user-enum -M RCPT -U userlist.txt -D inlanefreight.htb -t <TARGET_IP>
+```
+
+## Common options
+
+- `-M` → mode (`VRFY`, `EXPN`, `RCPT`)
+- `-U` → username list
+- `-D` → domain
+- `-t` → target
+
+## Why this matters
+
+Automation helps when:
+
+- testing many users
+- comparing modes
+- building credential attack lists
+- identifying naming patterns quickly
+
+---
+
+# 9. Cloud Mail Enumeration
+
+Cloud mail services do not always behave like traditional SMTP/POP/IMAP services.
+
+Instead, they often expose provider-specific login workflows, APIs, and authentication behaviour.
+
+This creates new attack surfaces for:
+
+- username enumeration
+- password spraying
+- tenant validation
+
+A common example is **Microsoft 365**.
+
+---
+
+## Validating Microsoft 365 usage
+
+A common tool is:
+
+```bash
+o365spray
+```
+
+### Domain validation
+
+```bash
+python3 o365spray.py --validate --domain <DOMAIN>
+```
+
+This helps confirm whether the target uses Office 365.
+
+---
+
+## Enumerating usernames in O365
+
+```bash
+python3 o365spray.py --enum -U users.txt --domain <DOMAIN>
+```
+
+### Why this matters
+
+This can identify valid cloud accounts even when traditional SMTP enumeration is unavailable or blocked.
+
+---
+
+# 10. Password Attacks Against Mail Services
+
+Once valid usernames are found, authentication becomes the next attack surface.
+
+Common approaches:
+
+- password spraying
+- credential stuffing
+- targeted guessing
+- brute force against weak services
+
+Targets may include:
+
+- SMTP
+- POP3
+- IMAP4
+- provider-specific OAuth / login endpoints
+
+---
+
+## Hydra against POP3
+
+Example:
+
+```bash
+hydra -L users.txt -p 'Company01!' -f <TARGET_IP> pop3
+```
+
+## Why this matters
+
+Useful when:
+
+- legacy services exposed
+- MFA not enforced
+- weak password policy
+- no lockout / poor throttling
+
+Hydra can also target other supported services, but use appropriate service modules.
+
+---
+
+## Password spraying against Microsoft 365
+
+Example:
+
+```bash
+python3 o365spray.py --spray -U usersfound.txt -p 'March2022!' --count 1 --lockout 1 --domain <DOMAIN>
+```
+
+### Spray logic
+
+- try one password across many users
+- avoid account lockouts
+- stay below detection thresholds
+
+### Why this matters
+
+Cloud services often detect brute force quickly, so spraying is usually safer than user-by-user guessing.
+
+---
+
+# 11. Open Relay
+
+An **open relay** SMTP server accepts and forwards email from unauthenticated external senders.
+
+This is a serious misconfiguration.
+
+## Risks
+
+Attackers can abuse it for:
+
+- phishing
+- spoofed internal messages
+- spam delivery
+- hiding message origin
+- reputation damage
+
+---
+
+## Detecting open relay with Nmap
+
+```bash
+nmap -p25 -Pn --script smtp-open-relay <TARGET_IP>
+```
+
+If the server is an open relay, Nmap may report it directly.
+
+---
+
+## Sending mail through an open relay
+
+A common tool is:
+
+```bash
+swaks
+```
+
+Example:
+
+```bash
+swaks --from notifications@inlanefreight.com \
+--to employees@inlanefreight.com \
+--header 'Subject: Company Notification' \
+--body 'Hi All, please complete the following survey: http://example.com/' \
+--server <TARGET_IP>
+```
+
+## Why this matters
+
+If successful, this means the server can be abused to send convincing spoofed email from trusted-looking addresses.
+
+That is highly relevant for:
+
+- phishing simulations
+- adversary emulation
+- mail security reviews
+- relay misconfiguration assessments
+
+---
+
+# 12. Practical Enumeration Workflow
+
+## Step 1 – Identify MX records
+
+```bash
+host -t MX <DOMAIN>
+dig mx <DOMAIN>
+```
+
+Determine whether the target uses:
+
+- Google Workspace
+- Microsoft 365
+- Zoho
+- custom mail host
+
+## Step 2 – Resolve mail host
+
+```bash
+host -t A <MAIL_HOST>
+```
+
+## Step 3 – Enumerate mail ports
+
+```bash
+sudo nmap -Pn -sV -sC -p25,110,143,465,587,993,995 <TARGET_IP>
+```
+
+## Step 4 – Test username enumeration
+
+Try:
+
+- `VRFY`
+- `EXPN`
+- `RCPT TO`
+- POP3 `USER`
+
+## Step 5 – Automate where useful
+
+```bash
+smtp-user-enum
+o365spray
+```
+
+## Step 6 – Test authentication carefully
+
+Use password spraying, not noisy brute force.
+
+## Step 7 – Check for protocol-specific misconfigurations
+
+Especially:
+
+- open relay
+- legacy auth
+- exposed plaintext services
+- poor lockout
+
+---
+
+# 13. Useful Commands
+
+## MX lookup
+
+```bash
+host -t MX <DOMAIN>
+dig mx <DOMAIN>
+```
+
+## Resolve mail host
+
+```bash
+host -t A <MAIL_HOST>
+```
+
+## Enumerate mail ports
+
+```bash
+sudo nmap -Pn -sV -sC -p25,110,143,465,587,993,995 <TARGET_IP>
+```
+
+## Manual SMTP interaction
+
+```bash
+telnet <TARGET_IP> 25
+```
+
+## Manual POP3 interaction
+
+```bash
+telnet <TARGET_IP> 110
+```
+
+## SMTP user enumeration
+
+```bash
+smtp-user-enum -M RCPT -U users.txt -D <DOMAIN> -t <TARGET_IP>
+```
+
+## O365 validation
+
+```bash
+python3 o365spray.py --validate --domain <DOMAIN>
+```
+
+## O365 enumeration
+
+```bash
+python3 o365spray.py --enum -U users.txt --domain <DOMAIN>
+```
+
+## POP3 password spray example
+
+```bash
+hydra -L users.txt -p 'Company01!' -f <TARGET_IP> pop3
+```
+
+## Open relay test
+
+```bash
+nmap -p25 -Pn --script smtp-open-relay <TARGET_IP>
+```
+
+## Send test email with swaks
+
+```bash
+swaks --from sender@example.com --to user@example.com --server <TARGET_IP>
+```
+
+---
+
+# 14. Key Takeaways
+
+- MX records are the first clue to mail service ownership
+- cloud-hosted and self-hosted mail require different enumeration approaches
+- SMTP may expose usernames via `VRFY`, `EXPN`, and `RCPT TO`
+- POP3 can sometimes confirm valid usernames with `USER`
+- `smtp-user-enum` helps automate traditional SMTP user discovery
+- Microsoft 365 often requires provider-specific tooling such as `o365spray`
+- password spraying is usually safer than brute force in mail environments
+- open relays are high-impact misconfigurations that enable spoofed mail delivery
+
+---
+
+# Tags
+
+#email
+#smtp
+#pop3
+#imap
+#mx-records
+#smtp-user-enum
+#o365spray
+#hydra
+#swaks
+#open-relay
+#attacking-common-services
+#enumeration
+#pentesting
+#ctf
+#obsidian

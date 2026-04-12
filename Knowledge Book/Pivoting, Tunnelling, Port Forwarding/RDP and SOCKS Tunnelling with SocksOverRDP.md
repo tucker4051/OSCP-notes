@@ -1,0 +1,436 @@
+# RDP and SOCKS Tunnelling with SocksOverRDP
+
+## Overview
+
+**SocksOverRDP** is a pivoting technique that tunnels network traffic through an **RDP session** by leveraging **Dynamic Virtual Channels (DVC)**.
+
+DVC is a built-in Windows feature used for:
+
+- clipboard sharing
+- audio streaming
+- printer redirection
+- device redirection
+
+SocksOverRDP abuses this feature to create a **SOCKS proxy over RDP**, enabling lateral movement within Windows-only environments where:
+
+- SSH is unavailable
+- Linux pivot hosts are unavailable
+- outbound tooling transfer is restricted
+- RDP is the only viable access channel
+
+This makes SocksOverRDP a useful **living-off-the-land pivot technique** in Windows-heavy environments.
+
+---
+
+# How SocksOverRDP Works
+
+The RDP protocol supports multiplexed communication channels called **Dynamic Virtual Channels (DVC)**.
+
+These channels allow arbitrary data to flow inside the encrypted RDP connection.
+
+SocksOverRDP leverages this capability to:
+
+1. inject a DLL into the RDP session
+2. create a SOCKS proxy on localhost
+3. tunnel traffic through the RDP session
+4. route traffic into the internal network
+
+---
+
+# Architecture
+
+| Component | Location | Purpose |
+|----------|----------|---------|
+| SocksOverRDP plugin DLL | foothold machine | creates SOCKS tunnel over RDP |
+| SocksOverRDP server | internal RDP target | relays traffic |
+| Proxifier | attacker system | routes traffic through SOCKS proxy |
+| RDP session | communication channel | encrypted transport |
+
+---
+
+# Scenario
+
+Attacker has access to:
+
+```
+Windows foothold system
+10.129.x.x network
+```
+
+Internal RDP target:
+
+```
+172.16.5.19
+```
+
+Deeper internal target:
+
+```
+172.16.6.155
+```
+
+Goal:
+
+Pivot deeper into internal network using only RDP connectivity.
+
+---
+
+# Required Tools
+
+### SocksOverRDP binaries
+
+```
+SocksOverRDP-x64.zip
+```
+
+### Proxifier portable
+
+```
+ProxifierPE.zip
+```
+
+Proxifier allows Windows applications to route traffic through SOCKS proxy.
+
+---
+
+# Step 1: Transfer SocksOverRDP Plugin to Foothold
+
+Copy:
+
+```
+SocksOverRDP-x64.zip
+```
+
+to compromised Windows machine.
+
+Extract archive.
+
+---
+
+# Step 2: Register DLL Plugin
+
+Load plugin using regsvr32:
+
+```cmd
+regsvr32.exe SocksOverRDP-Plugin.dll
+```
+
+Successful registration enables DVC channel tunnelling capability.
+
+---
+
+# Step 3: Connect to Internal Host via RDP
+
+Use mstsc.exe:
+
+```
+mstsc.exe
+```
+
+Connect to:
+
+```
+172.16.5.19
+```
+
+Credentials:
+
+```
+victor
+pass@123
+```
+
+Upon connection:
+
+SocksOverRDP plugin initializes SOCKS listener.
+
+---
+
+# Step 4: Deploy SocksOverRDP Server
+
+Transfer server component to RDP target:
+
+```
+SocksOverRDP-Server.exe
+```
+
+Execute with Administrator privileges:
+
+```cmd
+SocksOverRDP-Server.exe
+```
+
+Server component relays traffic through RDP virtual channel.
+
+---
+
+# Step 5: Confirm SOCKS Listener
+
+Verify SOCKS proxy is listening:
+
+```cmd
+netstat -antb | findstr 1080
+```
+
+Expected output:
+
+```text
+TCP 127.0.0.1:1080 LISTENING
+```
+
+SOCKS proxy created locally.
+
+---
+
+# Step 6: Configure Proxifier
+
+Transfer:
+
+```
+ProxifierPE.zip
+```
+
+Launch Proxifier portable.
+
+Configure proxy:
+
+```
+Address: 127.0.0.1
+Port: 1080
+Protocol: SOCKS5
+```
+
+Set global rule:
+
+```
+All traffic → 127.0.0.1:1080
+```
+
+---
+
+# Traffic Flow
+
+```
+attacker tools
+       ↓
+Proxifier
+       ↓
+SOCKS proxy (127.0.0.1:1080)
+       ↓
+RDP Dynamic Virtual Channel
+       ↓
+172.16.5.19
+       ↓
+internal network
+       ↓
+172.16.6.155
+```
+
+---
+
+# Pivot Using RDP Tunnel
+
+Launch additional RDP session:
+
+```cmd
+mstsc.exe
+```
+
+Traffic automatically routed via SOCKS proxy.
+
+Allows access to deeper hosts:
+
+```
+172.16.6.155
+```
+
+---
+
+# Why SocksOverRDP is Useful
+
+## Windows-native pivoting
+
+No SSH required.
+
+## Encrypted transport
+
+RDP traffic encrypted.
+
+## Blends with normal admin activity
+
+RDP commonly used in enterprise environments.
+
+## Bypasses firewall segmentation
+
+Uses existing RDP session.
+
+## Supports multiple protocols
+
+Any application supported by Proxifier.
+
+---
+
+# Performance Considerations
+
+Multiple RDP tunnels can cause latency.
+
+Optimise RDP performance:
+
+```
+mstsc.exe → Experience tab
+```
+
+Set performance profile:
+
+```
+Modem
+```
+
+This disables:
+
+- font smoothing
+- desktop composition
+- animations
+- wallpaper
+
+Improves responsiveness.
+
+---
+
+# Comparison with Other Pivot Methods
+
+| Tool | Protocol | OS dependency |
+|------|----------|--------------|
+| SSH dynamic forward | SOCKS | Linux/Windows |
+| proxychains | SOCKS | Linux |
+| meterpreter socks | TCP | cross-platform |
+| chisel | HTTP | cross-platform |
+| socksOverRDP | RDP DVC | Windows only |
+
+---
+
+# Advantages
+
+## Uses legitimate Windows feature
+
+Dynamic Virtual Channels are native to RDP.
+
+## No additional open ports required
+
+Tunnel operates inside RDP session.
+
+## Difficult to detect
+
+Traffic appears as legitimate RDP communication.
+
+## Compatible with many tools
+
+Works with:
+
+- browsers
+- RDP clients
+- SMB tools
+- WinRM tools
+- custom applications
+
+---
+
+# Limitations
+
+## Requires GUI access
+
+Requires active RDP session.
+
+## Windows-only
+
+Not applicable to Linux environments.
+
+## Performance overhead
+
+Latency depends on RDP quality.
+
+## Requires execution permissions
+
+Must register DLL and run server executable.
+
+---
+
+# Quick Command Reference
+
+## Register plugin
+
+```cmd
+regsvr32.exe SocksOverRDP-Plugin.dll
+```
+
+## Verify SOCKS listener
+
+```cmd
+netstat -antb | findstr 1080
+```
+
+## Configure proxy in Proxifier
+
+```
+127.0.0.1
+port 1080
+SOCKS5
+```
+
+## Launch RDP session
+
+```cmd
+mstsc.exe
+```
+
+---
+
+# Mental Model
+
+SocksOverRDP converts an RDP session into a SOCKS proxy tunnel.
+
+Instead of:
+
+```
+attacker → internal host
+```
+
+traffic flows as:
+
+```
+attacker tool
+      ↓
+SOCKS proxy
+      ↓
+RDP encrypted channel
+      ↓
+pivot host
+      ↓
+internal network
+```
+
+---
+
+# Key Takeaways
+
+- SocksOverRDP tunnels traffic through RDP Dynamic Virtual Channels.
+- enables SOCKS pivoting in Windows-only environments.
+- useful when SSH unavailable.
+- integrates with Proxifier for traffic routing.
+- effective lateral movement technique.
+- blends with legitimate administrative traffic.
+
+---
+
+# Tags
+
+#pivoting  
+#tunnelling  
+#rdp  
+#socks  
+#socksoverrdp  
+#windows  
+#proxifier  
+#lateral-movement  
+#redteam  
+#obsidian

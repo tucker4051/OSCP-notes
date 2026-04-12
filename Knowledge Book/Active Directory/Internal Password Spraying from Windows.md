@@ -1,0 +1,520 @@
+# Internal Password Spraying from Windows
+
+## Overview
+
+From a foothold on a **domain-joined Windows host**, password spraying can be very effective because the system is already inside the network and can often communicate directly with domain services.
+
+A particularly useful tool here is **DomainPasswordSpray**.
+
+What makes it valuable is that, when run as an authenticated domain user, it can automatically:
+
+- generate a target user list from Active Directory
+- query the domain password policy
+- identify the lockout threshold
+- exclude users who are close to being locked out
+- write successful results to a file
+
+Think of it like having a cautious assistant that not only tries keys, but first checks how fragile the locks are.
+
+---
+
+# Why Spray from Windows?
+
+There are several common situations where spraying from Windows makes sense:
+
+- you landed on a domain-joined workstation
+- the client wants testing performed from a managed Windows device
+- you are physically onsite and using a Windows VM
+- you gained a foothold through another method and want to escalate to a more privileged account
+
+Because the host is already domain-joined, tooling can often gather information more naturally than from an external or non-domain Linux host.
+
+---
+
+# DomainPasswordSpray
+
+## Example usage
+
+```powershell
+Import-Module .\DomainPasswordSpray.ps1
+Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success -ErrorAction SilentlyContinue
+```
+
+## Example output
+
+```text
+[*] Current domain is compatible with Fine-Grained Password Policy.
+[*] Now creating a list of users to spray...
+[*] The smallest lockout threshold discovered in the domain is 5 login attempts.
+[*] Removing disabled users from list.
+[*] There are 2923 total users found.
+[*] Removing users within 1 attempt of locking out from list.
+[*] Created a userlist containing 2923 users gathered from the current user's domain
+[*] The domain password policy observation window is set to  minutes.
+[*] Setting a  minute wait in between sprays.
+
+Confirm Password Spray
+Are you sure you want to perform a password spray against 2923 accounts?
+[Y] Yes  [N] No  [?] Help (default is "Y"): Y
+
+[*] Password spraying has begun with  1  passwords
+[*] This might take a while depending on the total number of users
+[*] Now trying password Welcome1 against 2923 users. Current time is 2:57 PM
+[*] Writing successes to spray_success
+[*] SUCCESS! User:sgage Password:Welcome1
+[*] SUCCESS! User:tjohnson Password:Welcome1
+
+[*] Password spraying is complete
+[*] Any passwords that were successfully sprayed have been output to spray_success
+```
+
+---
+
+# What the Command Does
+
+## Import the module
+
+```powershell
+Import-Module .\DomainPasswordSpray.ps1
+```
+
+Loads the PowerShell script so its functions become available in the session.
+
+## Run the spray
+
+```powershell
+Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success -ErrorAction SilentlyContinue
+```
+
+This tells the tool to:
+
+- use the password `Welcome1`
+- build the user list automatically from AD
+- write successful hits to `spray_success`
+- suppress noisy PowerShell errors
+
+---
+
+# Why This Tool Is So Useful
+
+When run from an authenticated, domain-joined Windows host, the tool can do a lot of the caution work for you.
+
+## It can automatically:
+
+- pull users from Active Directory
+- detect fine-grained password policies
+- determine the smallest lockout threshold
+- remove disabled users
+- exclude users within one attempt of being locked out
+
+This matters because password spraying is dangerous when done blindly.
+
+Without these protections, you are effectively throwing stones in a glass house.
+
+---
+
+# Why `-UserList` Was Not Needed Here
+
+Because the host is domain-joined and authenticated, the tool can generate the user list automatically.
+
+That means we can skip a manual user file in this scenario.
+
+If you were on a Windows host that was **not authenticated to the domain**, you could still use the tool, but you would likely need to provide your own user list with the `-UserList` option.
+
+---
+
+# Understanding the Output
+
+## Fine-Grained Password Policy
+
+```text
+[*] Current domain is compatible with Fine-Grained Password Policy.
+```
+
+This means the domain may apply different password rules to different users or groups.
+
+That is important because not every account may share the same lockout behavior.
+
+The tool tries to account for this by discovering the **smallest** lockout threshold.
+
+## Lockout threshold discovery
+
+```text
+[*] The smallest lockout threshold discovered in the domain is 5 login attempts.
+```
+
+This is the safest number to base your spraying strategy on.
+
+If one user group locks out after 5 attempts and another after 10, you must respect the lower number.
+
+## Removing risky accounts
+
+```text
+[*] Removing users within 1 attempt of locking out from list.
+```
+
+This is one of the best features of the tool.
+
+It reduces the chance of causing lockouts by excluding accounts already close to the threshold.
+
+## Writing successes to file
+
+```text
+[*] Writing successes to spray_success
+```
+
+This gives you a clean record of successful credentials for later validation and follow-up.
+
+---
+
+# Why Logging to a File Matters
+
+Saving results is more than convenience.
+
+It helps with:
+
+- tracking successful credentials
+- avoiding duplicated efforts
+- documenting activity for reporting
+- validating findings later
+- sharing evidence with the client if needed
+
+Always keep careful notes for any password spraying activity.
+
+At minimum, log:
+
+- usernames targeted
+- password attempted
+- time and date
+- target DC or application
+- successful hits
+- failures or anomalies
+
+---
+
+# Practical Notes About Running the Tool
+
+## `-ErrorAction SilentlyContinue`
+
+```powershell
+-ErrorAction SilentlyContinue
+```
+
+This suppresses noisy PowerShell errors so the output stays readable.
+
+That is useful during large spray operations where too much console clutter can hide the important lines.
+
+## Confirmation prompt
+
+```text
+Are you sure you want to perform a password spray against 2923 accounts?
+```
+
+This is a useful safety checkpoint.
+
+It forces you to pause before attempting a large-scale spray.
+
+Treat that prompt seriously. It is your last chance to ask:
+
+- Is the password choice justified?
+- Is the timing safe?
+- Do I understand the lockout policy?
+- Am I documenting this properly?
+
+---
+
+# Kerbrute on Windows
+
+The note mentions that **Kerbrute** is also available on the Windows host in `C:\Tools`.
+
+That means you can perform the same kinds of:
+
+- user enumeration
+- password spraying
+
+that you previously performed from Linux.
+
+This is useful when:
+
+- you are stuck on Windows
+- you want a familiar workflow
+- you need a fast Kerberos-based spray option
+
+Just remember the same caution applies: password attempts can still count toward account lockout thresholds.
+
+---
+
+# Mitigations
+
+Password spraying is best defended using a **defense-in-depth** approach.
+
+No single control completely stops it, but layered defenses make it much harder and much less likely to succeed.
+
+---
+
+## 1. Multi-factor Authentication
+
+**Multi-factor authentication (MFA)** is one of the best protections.
+
+Examples include:
+
+- push notifications
+- TOTP apps like Google Authenticator
+- RSA tokens
+- SMS confirmations
+
+### Why it helps
+
+Even if an attacker discovers a valid username/password pair, they may still be unable to log in.
+
+### Important caveat
+
+Some MFA implementations still reveal that the username/password is valid before the second factor fails.
+
+That means the credentials might still be reusable elsewhere.
+
+So MFA is excellent, but not a complete cure-all.
+
+---
+
+## 2. Restricting Access
+
+Many organizations allow any domain user to attempt access to systems or apps they do not actually need.
+
+This increases attack surface.
+
+### Better approach
+
+Follow the **principle of least privilege**:
+
+- only allow users who need an app to authenticate to it
+- restrict exposure of external portals
+- reduce the number of systems that accept general domain authentication
+
+The fewer doors every user can try, the fewer opportunities an attacker has.
+
+---
+
+## 3. Reducing the Impact of Successful Exploitation
+
+Even if spraying succeeds, the damage can be limited.
+
+Good practices include:
+
+- separate admin accounts from standard user accounts
+- assign app-specific permission levels
+- segment the network
+- avoid overprivileged users
+
+### Why this matters
+
+If an attacker sprays one weak password and lands a low-privileged account, that should not immediately lead to domain-wide compromise.
+
+Segmentation and privilege separation turn a breach into a contained incident instead of a cascade.
+
+---
+
+## 4. Password Hygiene
+
+Users choosing better passwords can dramatically reduce the effectiveness of spraying.
+
+Encourage:
+
+- longer passphrases
+- less predictable patterns
+- unique passwords
+- avoidance of company-themed passwords
+
+### Common weak patterns to avoid
+
+- `Welcome1`
+- `Spring2024!`
+- `CompanyName1`
+- `Password123`
+
+Organizations can also use password filters to block:
+
+- common dictionary words
+- month names
+- season names
+- company name variants
+
+---
+
+# Other Considerations
+
+A bad lockout policy can create its own problem.
+
+If the lockout threshold is very low and accounts require manual admin intervention to be unlocked, a careless spray can create a denial-of-service condition.
+
+That means a poorly designed defense can be weaponized against the organization.
+
+This is why password spraying must always be deliberate and carefully paced during an assessment.
+
+---
+
+# Detection
+
+Password spraying leaves patterns.
+
+Defenders should look for repeated authentication failures spread across many users in a short period.
+
+---
+
+## Common signs of external or internal spraying
+
+- many account lockouts in a short time
+- bursts of failed logons against one service
+- many requests using valid or non-existent usernames
+- repeated login attempts across many accounts using one password
+
+---
+
+## Key Windows Event IDs
+
+### Event ID 4625
+
+**An account failed to log on**
+
+This is one of the main signals for password spraying against services like:
+
+- SMB
+- RDP
+- web portals
+- other authentication points
+
+A spike in 4625 events across many accounts can indicate spraying.
+
+### Event ID 4771
+
+**Kerberos pre-authentication failed**
+
+This can indicate Kerberos-based password spraying attempts.
+
+To use this effectively, organizations need:
+
+- Kerberos logging enabled
+- correlation rules in SIEM
+- alerting for abnormal spikes
+
+---
+
+# What Good Detection Looks Like
+
+A mature environment should correlate:
+
+- number of failed logons
+- source host or IP
+- target application
+- affected user count
+- time window
+
+The pattern to catch is not just “many failures” but “many failures across many users using a consistent pattern.”
+
+That is the fingerprint of spraying.
+
+---
+
+# External Password Spraying
+
+This note focuses on **internal spraying**, but the same technique is commonly used externally.
+
+Common external targets include:
+
+- Microsoft 365
+- Outlook Web Access / Exchange portals
+- Skype for Business
+- Lync
+- Remote Desktop Services portals
+- Citrix portals
+- VDI portals such as VMware Horizon
+- VPN appliances
+- custom web applications using AD authentication
+
+Spraying against these services is often a path to:
+
+- mailbox access
+- VPN access
+- application access
+- deeper internal footholds
+
+---
+
+# Moving Deeper After a Hit
+
+Once spraying succeeds and valid credentials are found, the next step is **credentialed enumeration**.
+
+That can include:
+
+- identifying group membership
+- finding shares
+- enumerating AD objects
+- checking for privileged access
+- reviewing sessions on other systems
+- mapping attack paths for lateral and vertical movement
+
+A successful spray is usually not the end goal.
+
+It is the first good key on the ring.
+
+---
+
+# Quick Commands
+
+## Import DomainPasswordSpray
+
+```powershell
+Import-Module .\DomainPasswordSpray.ps1
+```
+
+## Spray one password and write successes to a file
+
+```powershell
+Invoke-DomainPasswordSpray -Password Welcome1 -OutFile spray_success -ErrorAction SilentlyContinue
+```
+
+---
+
+# Practical Workflow
+
+A sensible workflow for internal spraying from Windows is:
+
+1. confirm the password policy
+2. choose one carefully selected password
+3. use a domain-joined authenticated host when possible
+4. let the tool auto-generate the user list
+5. exclude risky accounts
+6. run one controlled spray
+7. save output to file
+8. validate successful hits
+9. move into credentialed enumeration
+
+This keeps the operation controlled and reportable.
+
+---
+
+# Key Takeaways
+
+- DomainPasswordSpray is highly effective from a domain-joined Windows host
+- it can generate users, query policy, and reduce lockout risk automatically
+- writing results to a file is essential for tracking and reporting
+- Kerbrute is also an option on Windows if available
+- password spraying should always be performed cautiously
+- MFA, least privilege, segmentation, and password hygiene all reduce risk
+- detection should focus on event IDs 4625 and 4771 plus behavioral correlation
+
+---
+
+# Tags
+
+#active-directory  
+#password-spraying  
+#windows  
+#domainpasswordspray  
+#kerbrute  
+#defense-in-depth  
+#detection  
+#mfa  
+#least-privilege  
+#ad-enumeration  
+#obsidian

