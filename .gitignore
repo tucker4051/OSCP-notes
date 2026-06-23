@@ -1,1 +1,9 @@
-ÿþ.obsidian/
+# Ignore everything by default
+/*
+
+# Keep gitignore itself
+!/.gitignore
+
+# Only track Knowledge Book
+!/Knowledge Book/
+!/Knowledge Book/**
