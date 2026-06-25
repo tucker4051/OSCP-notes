@@ -1,24 +1,3 @@
----
-title: Windows Privilege Escalation – SeTakeOwnershipPrivilege
-aliases:
-  - SeTakeOwnershipPrivilege
-  - Take Ownership Privilege
-  - Take Ownership of Files or Other Objects
-tags:
-  - windows
-  - privilege-escalation
-  - setakeownershipprivilege
-  - file-permissions
-  - icacls
-  - takeown
-  - ntfs
-  - acl
-  - gpo
-  - pentesting
----
-
-# Windows Privilege Escalation – SeTakeOwnershipPrivilege
-
 ## Overview
 
 `SeTakeOwnershipPrivilege` grants a user the ability to take ownership of any **securable object**.

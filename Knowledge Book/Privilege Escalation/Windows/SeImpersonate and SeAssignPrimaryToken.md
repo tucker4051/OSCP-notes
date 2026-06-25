@@ -1,5 +1,3 @@
-# Windows Privilege Escalation — SeImpersonate and SeAssignPrimaryToken
-
 ## Overview
 
 In Windows, every process has an access token containing information about the account running that process.

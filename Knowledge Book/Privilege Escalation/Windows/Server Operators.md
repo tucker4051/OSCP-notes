@@ -1,28 +1,3 @@
----
-title: Windows Privilege Escalation – Server Operators
-aliases:
-  - Server Operators
-  - Server Operators Group
-  - Server Operators Service Abuse
-  - AppReadiness Service Abuse
-tags:
-  - windows
-  - privilege-escalation
-  - server-operators
-  - windows-services
-  - service-permissions
-  - appreadiness
-  - sebackupprivilege
-  - serestoreprivilege
-  - domain-controller
-  - local-admin
-  - secretsdump
-  - ntds-dit
-  - pentesting
----
-
-# Windows Privilege Escalation – Server Operators
-
 ## Overview
 
 The `Server Operators` group allows members to administer Windows servers without assigning them full `Domain Admin` privileges.

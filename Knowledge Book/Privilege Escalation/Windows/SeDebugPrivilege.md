@@ -1,24 +1,3 @@
----
-title: Windows Privilege Escalation – SeDebugPrivilege
-aliases:
-  - SeDebugPrivilege
-  - Debug Programs Privilege
-  - Windows Debug Programs User Right
-tags:
-  - windows
-  - privilege-escalation
-  - sedebugprivilege
-  - lsass
-  - mimikatz
-  - procdump
-  - credential-dumping
-  - rce
-  - system
-  - pentesting
----
-
-# Windows Privilege Escalation – SeDebugPrivilege
-
 ## Overview
 
 `SeDebugPrivilege` is the Windows **Debug programs** user right.

@@ -1,5 +1,3 @@
-# Windows Privilege Escalation — Situational Awareness
-
 ## Overview
 
 Situational awareness means understanding the system and environment we have landed in before deciding what to do next.

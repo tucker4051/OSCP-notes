@@ -1,24 +1,3 @@
----
-title: Windows Privilege Escalation – Credential Hunting
-aliases:
-  - Windows Credential Hunting
-  - Credential Discovery
-  - Cleartext Password Hunting
-  - PowerShell History Credentials
-  - DPAPI PowerShell Credentials
-tags:
-  - windows
-  - privilege-escalation
-  - credential-hunting
-  - cleartext-passwords
-  - application-config-files
-  - powershell-history
-  - dpapi
-  - unattended-installation
-  - web-config
-  - findstr
-  - pentesting
----
 ## Overview
 
 Credentials can unlock many paths during an assessment.

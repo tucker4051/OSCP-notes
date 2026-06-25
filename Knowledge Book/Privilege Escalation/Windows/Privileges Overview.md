@@ -1,5 +1,3 @@
-# Windows Privilege Escalation — Windows Privileges Overview
-
 ## Overview
 
 Windows privileges are rights granted to an account that allow it to perform specific operations on the local system.

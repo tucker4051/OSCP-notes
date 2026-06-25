@@ -1,28 +1,3 @@
----
-title: Windows Privilege Escalation – DLL Injection and DLL Hijacking
-aliases:
-  - DLL Injection
-  - DLL Hijacking
-  - DLL Proxying
-  - LoadLibrary Injection
-  - Manual Mapping
-  - Reflective DLL Injection
-  - Safe DLL Search Mode
-tags:
-  - windows
-  - privilege-escalation
-  - dll-injection
-  - dll-hijacking
-  - dll-proxying
-  - loadlibrary
-  - manual-mapping
-  - reflective-dll-injection
-  - procmon
-  - process-monitor
-  - sysinternals
-  - windows-internals
-  - pentesting
----
 
 # Windows Privilege Escalation – DLL Injection and DLL Hijacking
 

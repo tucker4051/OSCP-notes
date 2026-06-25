@@ -1,25 +1,3 @@
----
-title: Windows Privilege Escalation – Credential Hunting in Files and Shares
-aliases:
-  - Credential Hunting in Files
-  - Windows File System Credential Hunting
-  - Network Share Credential Hunting
-  - Sticky Notes Passwords
-  - Interesting Files for Credentials
-tags:
-  - windows
-  - privilege-escalation
-  - credential-hunting
-  - file-system
-  - network-shares
-  - snaffler
-  - sticky-notes
-  - sqlite
-  - powershell
-  - findstr
-  - sensitive-files
-  - pentesting
----
 ## Overview
 
 Credentials and sensitive operational data are often stored in local files or network share drives.

@@ -1,30 +1,3 @@
----
-title: Windows Privilege Escalation – Citrix Breakout and Restricted Desktop Bypass
-aliases:
-  - Citrix Breakout
-  - Restricted Desktop Breakout
-  - Kiosk Breakout
-  - Terminal Services Breakout
-  - Dialog Box Breakout
-  - Alternate Explorer Bypass
-  - AlwaysInstallElevated Citrix Escalation
-tags:
-  - windows
-  - privilege-escalation
-  - citrix
-  - restricted-desktop
-  - kiosk-breakout
-  - terminal-services
-  - dialog-box
-  - smb
-  - explorer-plus-plus
-  - shortcuts
-  - script-execution
-  - alwaysinstallelevated
-  - uac-bypass
-  - pentesting
----
-
 ## Overview
 
 Organizations commonly use virtualization and remote access platforms to provide controlled desktop access.

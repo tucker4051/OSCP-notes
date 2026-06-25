@@ -1,26 +1,3 @@
----
-title: Windows Privilege Escalation – Event Log Readers
-aliases:
-  - Event Log Readers
-  - Windows Event Log Readers
-  - Security Event Log Credential Hunting
-  - Event ID 4688
-tags:
-  - windows
-  - privilege-escalation
-  - event-log-readers
-  - event-logs
-  - credential-hunting
-  - windows-security-log
-  - event-id-4688
-  - wevtutil
-  - get-winevent
-  - powershell
-  - pentesting
----
-
-# Windows Privilege Escalation – Event Log Readers
-
 ## Overview
 
 The `Event Log Readers` group allows members to read event logs from a local Windows machine.

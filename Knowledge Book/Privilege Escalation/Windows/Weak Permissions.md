@@ -1,26 +1,3 @@
----
-title: Windows Privilege Escalation – Weak Service and Registry Permissions
-aliases:
-  - Weak Service Permissions
-  - Permissive Service ACLs
-  - Modifiable Service Binaries
-  - Unquoted Service Paths
-  - Permissive Registry ACLs
-  - Autorun Binary Abuse
-tags:
-  - windows
-  - privilege-escalation
-  - windows-services
-  - service-permissions
-  - weak-acls
-  - icacls
-  - accesschk
-  - sharpup
-  - unquoted-service-path
-  - registry-acls
-  - autoruns
-  - pentesting
----
 ## Overview
 
 Windows permissions are complex and easy to misconfigure. A small permission change in one location can unintentionally introduce a privilege escalation path somewhere else.

@@ -1,5 +1,3 @@
-# Windows Privilege Escalation — Useful Tools
-
 ## Overview
 
 When enumerating Windows systems for privilege escalation opportunities, there are many tools that can help identify common and obscure misconfigurations.

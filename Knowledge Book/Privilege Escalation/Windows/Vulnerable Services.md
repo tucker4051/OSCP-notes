@@ -1,26 +1,3 @@
----
-title: Windows Privilege Escalation – Vulnerable Third-Party Software
-aliases:
-  - Vulnerable Third-Party Applications
-  - Druva inSync Privilege Escalation
-  - Druva inSync 6.6.3
-  - inSyncCPHService
-  - Third-Party Software LPE
-tags:
-  - windows
-  - privilege-escalation
-  - third-party-software
-  - vulnerable-software
-  - druva
-  - druva-insync
-  - command-injection
-  - rpc
-  - local-privilege-escalation
-  - reverse-shell
-  - system
-  - pentesting
----
-
 ## Overview
 
 Even well-patched and well-configured Windows systems can be vulnerable if users are allowed to install software or if vulnerable third-party applications are deployed across the organization.

@@ -1,5 +1,3 @@
-# Windows Privilege Escalation — Initial Enumeration
-
 ## Overview
 
 During an assessment, we may gain a low-privileged shell on a Windows host and need to escalate privileges to further our access.

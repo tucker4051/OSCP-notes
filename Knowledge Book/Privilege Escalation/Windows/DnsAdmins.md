@@ -1,29 +1,3 @@
----
-title: Windows Privilege Escalation – DnsAdmins
-aliases:
-  - DnsAdmins
-  - DNS Admins
-  - DNS ServerLevelPluginDll Abuse
-  - DNS Plugin DLL Privilege Escalation
-  - WPAD Abuse via DnsAdmins
-tags:
-  - windows
-  - privilege-escalation
-  - active-directory
-  - dnsadmins
-  - dns
-  - domain-controller
-  - dnscmd
-  - dll-hijacking
-  - serverlevelplugindll
-  - wpad
-  - responder
-  - inveigh
-  - pentesting
----
-
-# Windows Privilege Escalation – DnsAdmins
-
 ## Overview
 
 Members of the `DnsAdmins` group have access to DNS management functionality in an Active Directory environment.

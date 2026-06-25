@@ -1,30 +1,3 @@
----
-title: Windows Privilege Escalation – Backup Operators and SeBackupPrivilege
-aliases:
-  - Backup Operators
-  - SeBackupPrivilege
-  - SeRestorePrivilege
-  - Windows Backup Operators Group
-  - Copying NTDS.dit with SeBackupPrivilege
-tags:
-  - windows
-  - privilege-escalation
-  - backup-operators
-  - sebackupprivilege
-  - serestoreprivilege
-  - ntds-dit
-  - active-directory
-  - domain-controller
-  - diskshadow
-  - robocopy
-  - secretsdump
-  - dsinternals
-  - credential-dumping
-  - pentesting
----
-
-# Windows Privilege Escalation – Backup Operators and SeBackupPrivilege
-
 ## Overview
 
 Windows servers and Domain Controllers include several built-in groups that grant special privileges to their members.

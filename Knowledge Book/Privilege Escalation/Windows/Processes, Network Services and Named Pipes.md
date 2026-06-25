@@ -1,5 +1,3 @@
-# Windows Privilege Escalation — Processes, Network Services and Named Pipes
-
 ## Overview
 
 One of the best places to look for privilege escalation opportunities is the list of processes and services running on the system.

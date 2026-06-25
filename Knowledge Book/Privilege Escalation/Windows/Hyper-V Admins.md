@@ -1,28 +1,3 @@
----
-title: Windows Privilege Escalation – Hyper-V Administrators
-aliases:
-  - Hyper-V Administrators
-  - Hyper-V Admins
-  - Hyper-V Admin to SYSTEM
-  - Hyper-V Virtualized Domain Controller Risk
-tags:
-  - windows
-  - privilege-escalation
-  - hyper-v
-  - hyper-v-administrators
-  - system
-  - domain-controller
-  - ntds-dit
-  - hard-link
-  - vhdx
-  - cve-2018-0952
-  - cve-2019-0841
-  - windows-services
-  - pentesting
----
-
-# Windows Privilege Escalation – Hyper-V Administrators
-
 ## Overview
 
 The `Hyper-V Administrators` group has full access to all Hyper-V features.

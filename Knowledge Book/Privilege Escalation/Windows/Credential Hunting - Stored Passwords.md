@@ -1,34 +1,3 @@
----
-title: Windows Privilege Escalation – Credential Hunting with Saved Credentials, Browsers, Password Managers, and Registry Secrets
-aliases:
-  - Windows Saved Credentials
-  - Cmdkey Saved Credentials
-  - Browser Credential Hunting
-  - Chrome Saved Logins
-  - KeePass Cracking
-  - LaZagne
-  - SessionGopher
-  - Autologon Passwords
-  - PuTTY Registry Credentials
-  - WiFi Passwords
-tags:
-  - windows
-  - privilege-escalation
-  - credential-hunting
-  - cmdkey
-  - runas
-  - chrome
-  - sharpchrome
-  - keepass
-  - hashcat
-  - lazagne
-  - sessiongopher
-  - registry
-  - autologon
-  - putty
-  - wifi-passwords
-  - pentesting
----
 ## Overview
 
 Windows systems can store credentials in many places beyond obvious files and scripts.

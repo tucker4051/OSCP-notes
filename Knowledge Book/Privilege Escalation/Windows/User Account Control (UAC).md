@@ -1,25 +1,3 @@
----
-title: Windows Privilege Escalation – UAC Bypass via SystemPropertiesAdvanced DLL Hijacking
-aliases:
-  - UAC Bypass
-  - User Account Control
-  - SystemPropertiesAdvanced UAC Bypass
-  - srrstr.dll DLL Hijacking
-  - UACME Technique 54
-tags:
-  - windows
-  - privilege-escalation
-  - uac
-  - uac-bypass
-  - dll-hijacking
-  - systempropertiesadvanced
-  - srrstr-dll
-  - integrity-levels
-  - windows-10
-  - uacme
-  - pentesting
----
-
 ## Overview
 
 User Account Control, or `UAC`, is a Windows feature that prompts for consent before elevated actions are performed.

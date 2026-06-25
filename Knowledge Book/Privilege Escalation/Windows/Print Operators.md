@@ -1,25 +1,3 @@
----
-title: Windows Privilege Escalation – Print Operators and SeLoadDriverPrivilege
-aliases:
-  - Print Operators
-  - SeLoadDriverPrivilege
-  - Load and Unload Device Drivers
-  - Capcom.sys Privilege Escalation
-  - EoPLoadDriver
-tags:
-  - windows
-  - privilege-escalation
-  - print-operators
-  - seloaddriverprivilege
-  - capcom-sys
-  - vulnerable-driver
-  - uac-bypass
-  - windows-drivers
-  - exploitcapcom
-  - eoploaddriver
-  - system
-  - pentesting
----
 ## Overview
 
 `Print Operators` is a highly privileged built-in Windows group.
