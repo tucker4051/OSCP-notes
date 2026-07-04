@@ -68,6 +68,8 @@ mysql -u <user> -p<password> -h <IP address>
 
 ⚠️ No space between `-p` and the password.
 
+
+
 ### Example
 ```bash
 mysql -u root -ppassword -h 10.10.10.10
@@ -76,6 +78,12 @@ mysql -u root -ppassword -h 10.10.10.10
 Prompted password version:
 ```bash
 mysql -u root -p -h 10.10.10.10
+```
+
+If `ERROR 2026 (HY000): TLS/SSL error: self-signed certificate in certificate chain`
+
+```bash
+mysql -u root -p -h 10.10.10.10 --skip-ssl
 ```
 
 ---

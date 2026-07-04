@@ -1000,7 +1000,7 @@ Document:
 - [[DnsAdmins]]
 - [[Active Directory]]
 - [[Domain Controller]]
-- [[DNS]]
+- [[Knowledge Book/Enumeration/DNS]]
 - [[dnscmd]]
 - [[ServerLevelPluginDll]]
 - [[Windows Services]]

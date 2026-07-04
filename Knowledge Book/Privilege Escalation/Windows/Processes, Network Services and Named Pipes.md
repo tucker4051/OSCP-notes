@@ -263,20 +263,20 @@ If FileZilla is running as an administrator or privileged service account, this 
 
 ## Common Interesting Ports
 
-| Port | Service | Why It May Matter |
-|---|---|---|
-| `21` | FTP | May expose credentials, anonymous access, writable directories, or FileZilla. |
-| `80` | HTTP | Web service. May allow web shell upload or application exploitation. |
-| `135` | RPC | Windows RPC endpoint mapper. Useful for service enumeration. |
-| `139` | NetBIOS | Legacy Windows file sharing and name service. |
-| `445` | SMB | File shares, named pipes, remote administration. |
-| `3389` | RDP | Remote Desktop access and active session indicators. |
-| `5985` | WinRM HTTP | Remote PowerShell access. |
-| `5986` | WinRM HTTPS | Remote PowerShell over HTTPS. |
-| `8080` | HTTP alternate | Often used by web applications, proxies, or admin panels. |
-| `14147` | FileZilla Admin | Local administrative interface for FileZilla Server. |
-| `1433` | MSSQL | SQL Server. May expose database access or service account abuse. |
-| `25672` | Erlang | Erlang distribution port, often relevant to RabbitMQ and similar services. |
+| Port    | Service         | Why It May Matter                                                             |
+| ------- | --------------- | ----------------------------------------------------------------------------- |
+| `21`    | FTP             | May expose credentials, anonymous access, writable directories, or FileZilla. |
+| `80`    | HTTP            | Web service. May allow web shell upload or application exploitation.          |
+| `135`   | RPC             | Windows RPC endpoint mapper. Useful for service enumeration.                  |
+| `139`   | NetBIOS         | Legacy Windows file sharing and name service.                                 |
+| `445`   | SMB             | File shares, named pipes, remote administration.                              |
+| `3389`  | RDP             | Remote Desktop access and active session indicators.                          |
+| `5985`  | WinRM HTTP      | Remote PowerShell access.                                                     |
+| `5986`  | WinRM HTTPS     | Remote PowerShell over HTTPS.                                                 |
+| `8080`  | HTTP alternate  | Often used by web applications, proxies, or admin panels.                     |
+| `14147` | FileZilla Admin | Local administrative interface for FileZilla Server.                          |
+| `1433`  | MSSQL           | SQL Server. May expose database access or service account abuse.              |
+| `25672` | Erlang          | Erlang distribution port, often relevant to RabbitMQ and similar services.    |
 
 ---
 

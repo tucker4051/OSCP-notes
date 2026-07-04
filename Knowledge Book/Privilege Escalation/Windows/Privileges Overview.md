@@ -603,17 +603,17 @@ SeNetworkLogonRight
 
 # High-Value Privileges for Privilege Escalation
 
-| Privilege | Potential Abuse |
-|---|---|
-| `SeImpersonatePrivilege` | Token impersonation attacks to escalate to SYSTEM. |
-| `SeAssignPrimaryTokenPrivilege` | Token abuse and process creation with alternate tokens. |
-| `SeDebugPrivilege` | Dump credentials or interact with privileged processes. |
-| `SeBackupPrivilege` | Read protected files such as `SAM`, `SYSTEM`, or `NTDS.dit`. |
-| `SeRestorePrivilege` | Write files to protected locations or overwrite service binaries. |
-| `SeTakeOwnershipPrivilege` | Take ownership of protected files, services, or registry keys. |
-| `SeLoadDriverPrivilege` | Load a vulnerable or malicious driver. |
-| `SeManageVolumePrivilege` | Potential file system abuse. |
-| `SeTcbPrivilege` | Act as part of the operating system. Extremely powerful. |
+| Privilege                       | Potential Abuse                                                   |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `SeImpersonatePrivilege`        | Token impersonation attacks to escalate to SYSTEM.                |
+| `SeAssignPrimaryTokenPrivilege` | Token abuse and process creation with alternate tokens.           |
+| `SeDebugPrivilege`              | Dump credentials or interact with privileged processes.           |
+| `SeBackupPrivilege`             | Read protected files such as `SAM`, `SYSTEM`, or `NTDS.dit`.      |
+| `SeRestorePrivilege`            | Write files to protected locations or overwrite service binaries. |
+| `SeTakeOwnershipPrivilege`      | Take ownership of protected files, services, or registry keys.    |
+| `SeLoadDriverPrivilege`         | Load a vulnerable or malicious driver.                            |
+| `SeManageVolumePrivilege`       | Potential file system abuse.                                      |
+| `SeTcbPrivilege`                | Act as part of the operating system. Extremely powerful.          |
 
 ---
 

@@ -56,14 +56,14 @@ Even under password policy pressure, users commonly adapt simple words instead o
 
 Common patterns:
 
-| Description | Example |
-|------------|---------|
-| capitalized first letter | `Password` |
-| append digits | `Password123` |
-| append year | `Password2024` |
-| append month | `Password08` |
-| add symbol | `Password!` |
-| leetspeak substitution | `P@ssw0rd` |
+| Description               | Example         |
+| ------------------------- | --------------- |
+| capitalized first letter  | `Password`      |
+| append digits             | `Password123`   |
+| append year               | `Password2024`  |
+| append month              | `Password08`    |
+| add symbol                | `Password!`     |
+| leetspeak substitution    | `P@ssw0rd`      |
 | combine multiple patterns | `Password2024!` |
 
 This predictability is exactly what custom rules exploit.

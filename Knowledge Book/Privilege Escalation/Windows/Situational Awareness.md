@@ -1,671 +1,1116 @@
 ## Overview
 
-Situational awareness means understanding the system and environment we have landed in before deciding what to do next.
+Situational awareness is the first structured enumeration phase after gaining access to a Windows host.
 
-When we gain access to a Windows host, we should avoid jumping straight into exploitation. First, we need to orient ourselves by identifying:
+The goal is to understand:
 
-- Where the host sits on the network
-- What interfaces and routes it has
-- Whether it is joined to a domain
-- What other systems it has communicated with
-- What security protections are running
-- Whether application control is in place
-- What tools or commands may be blocked
+- who we are
+- what host we are on
+- what privileges and groups we have
+- what users and groups exist locally
+- what operating system and architecture are in use
+- what network interfaces, routes, and connections exist
+- whether the host is domain joined
+- what applications are installed
+- what processes and services are running
+- what defensive controls may block tooling or trigger alerts
+- whether the host provides access to additional networks or systems
 
-**Key idea:** Situational awareness helps us make informed decisions. Instead of reacting blindly, we use system and network context to plan privilege escalation, lateral movement, and tool execution more effectively.
-
----
-
-## Why Situational Awareness Matters
-
-When landing on a Windows or Linux host during a penetration test, there are several things we should always check before attempting privilege escalation.
-
-We may discover:
-
-- Other reachable hosts
-- Multiple network interfaces
-- Additional internal networks
-- Domain controller information
-- Recently contacted systems
-- Routes into restricted network segments
-- Antivirus or EDR products
-- Application whitelisting controls
-- Tooling restrictions
-- Commands that are likely to trigger alerts
-
-This information may directly support local privilege escalation, or it may reveal a better route through the environment.
-
-For example, a host may be **dual-homed**, meaning it has access to two networks. Compromising that host could provide a route into an internal subnet that was not reachable from our original attack box.
+> [!important]
+> Do not jump straight into exploitation. Situational awareness helps decide whether local privilege escalation is worthwhile, which techniques are likely to work, and whether the host can support lateral movement.
 
 ---
 
-# Network Information
+# Why Situational Awareness Matters
 
-## Why Gather Network Information?
+Situational awareness can reveal:
 
-Gathering network information is a crucial part of enumeration.
+- local privilege escalation paths
+- reachable internal networks
+- dual-homed hosts
+- active administrator sessions
+- domain controller or DNS information
+- interesting local users
+- privileged groups
+- remote access groups
+- installed applications with saved credentials
+- running services such as web servers or databases
+- AV, EDR, Defender, or AppLocker controls
+- allowed and blocked execution paths
 
-It can help us identify:
+Not every compromised host needs to be rooted. In a real assessment, the better question is:
 
-- The host's IP addresses
-- Network interfaces
-- DNS servers
-- Default gateways
-- Domain-related DNS suffixes
-- Other local subnets
-- Recently contacted hosts
-- Routing paths
-- Possible lateral movement targets
+```text
+Will privileged access on this host help me move toward the objective?
+```
 
-Network information can support both:
+For example:
 
-1. **Privilege escalation**, by identifying local context and restrictions.
-2. **Lateral movement**, by identifying reachable systems and network paths.
-
----
-
-## Dual-Homed Hosts
-
-A **dual-homed host** is a system connected to two or more networks.
-
-This usually means the host has multiple physical or virtual network interfaces.
-
-A dual-homed host can act like a bridge between network segments. If we compromise it, we may be able to access another part of the network that was previously unreachable.
-
-Useful indicators include:
-
-- Multiple Ethernet adapters
-- Multiple IPv4 addresses
-- Multiple default gateways
-- Routes to different internal ranges
-- DNS suffixes linked to internal domains
+- A workstation with an active admin RDP session may be high value.
+- A dual-homed server may provide access to a hidden subnet.
+- A host running KeePass, FileZilla, XAMPP, or MySQL may contain credentials or sensitive data.
+- A machine with restrictive AppLocker rules may require different tooling.
 
 ---
 
-## Interface, IP Address, and DNS Information
+# First-Pass Workflow
 
-Use `ipconfig /all` to gather detailed network interface information.
+Run these checks first to orient yourself.
+
+```cmd
+hostname
+whoami
+whoami /priv
+whoami /groups
+systeminfo
+ipconfig /all
+arp -a
+route print
+netstat -ano
+```
+
+Then continue with:
+
+```cmd
+net user
+net localgroup
+```
+
+PowerShell equivalents:
+
+```powershell
+Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember <group>
+Get-Process
+```
+
+---
+
+# 1. Identify Current User and Host
+
+## Current User
+
+```cmd
+whoami
+```
+
+Example:
+
+```cmd
+C:\Users\dave> whoami
+
+clientwk220\dave
+```
+
+This tells us:
+
+| Item | Meaning |
+|---|---|
+| `clientwk220` | Hostname or local computer name |
+| `dave` | Current user context |
+
+Hostnames can reveal system purpose.
+
+Examples:
+
+```text
+WEB01
+MSSQL01
+CLIENTWK220
+DC01
+BACKUP01
+FILE01
+```
+
+Useful assumptions:
+
+| Hostname Pattern | Possible Role |
+|---|---|
+| `WEB` | Web server |
+| `SQL`, `MSSQL`, `DB` | Database server |
+| `DC` | Domain controller |
+| `FILE` | File server |
+| `BK`, `BACKUP` | Backup server |
+| `CLIENT`, `WK`, `LAPTOP` | Workstation |
+
+> [!tip]
+> Hostnames are not proof, but they often provide useful direction for further enumeration.
+
+---
+
+# 2. Enumerate Current User Privileges
+
+## Check Token Privileges
+
+```cmd
+whoami /priv
+```
+
+Look for privileges such as:
+
+| Privilege | Why It Matters |
+|---|---|
+| `SeImpersonatePrivilege` | May enable Potato-style privilege escalation. |
+| `SeAssignPrimaryTokenPrivilege` | May support token-based privilege escalation. |
+| `SeBackupPrivilege` | Can read protected files and registry hives. |
+| `SeRestorePrivilege` | Can overwrite protected files. |
+| `SeDebugPrivilege` | Can access/debug privileged processes. |
+| `SeTakeOwnershipPrivilege` | Can take ownership of files or objects. |
+| `SeLoadDriverPrivilege` | May allow driver-based escalation. |
+| `SeManageVolumePrivilege` | Can sometimes be abused for file access/escalation. |
+
+Example high-value finding:
+
+```text
+SeImpersonatePrivilege        Enabled
+```
+
+Potential follow-up:
+
+```text
+JuicyPotato
+PrintSpoofer
+RoguePotato
+GodPotato
+```
+
+---
+
+# 3. Enumerate Current User Groups
+
+## Check Group Memberships
+
+```cmd
+whoami /groups
+```
+
+PowerShell equivalent:
+
+```powershell
+[System.Security.Principal.WindowsIdentity]::GetCurrent().Groups
+```
+
+Example useful groups:
+
+| Group | Why It Matters |
+|---|---|
+| `Administrators` | Full local administrative access. |
+| `Remote Desktop Users` | Can log in over RDP. |
+| `Remote Management Users` | Can use WinRM. |
+| `Backup Operators` | Can back up and restore files regardless of ACLs. |
+| `Event Log Readers` | Can read event logs, sometimes useful for credentials or activity. |
+| `DnsAdmins` | Domain privilege escalation possibility in AD environments. |
+| `Print Operators` | Can have elevated rights on certain systems. |
+| Custom groups | May imply business-specific permissions. |
+
+Example:
+
+```text
+CLIENTWK220\helpdesk
+BUILTIN\Remote Desktop Users
+BUILTIN\Users
+```
+
+Interpretation:
+
+- `helpdesk` may have extra access compared to a normal user.
+- `Remote Desktop Users` means credentials for this user may allow GUI access over RDP.
+- Custom groups should be investigated.
+
+---
+
+# 4. Enumerate Local Users
+
+## Using net user
+
+```cmd
+net user
+```
+
+## Using PowerShell
+
+```powershell
+Get-LocalUser
+```
+
+Example:
+
+```powershell
+Get-LocalUser
+
+Name               Enabled Description
+----               ------- -----------
+Administrator      False   Built-in account for administering the computer/domain
+BackupAdmin        True
+dave               True    dave
+daveadmin          True
+DefaultAccount     False   A user account managed by the system.
+Guest              False   Built-in account for guest access to the computer/domain
+offsec             True
+steve              True
+```
+
+## What to Look For
+
+| Item | Why It Matters |
+|---|---|
+| Enabled admin-like users | Potential privilege escalation or credential targets. |
+| Disabled Administrator | Built-in admin may not be usable. |
+| Users ending in `admin` | May indicate privileged companion accounts. |
+| Backup-related accounts | May have access to sensitive files or systems. |
+| Descriptions | Sometimes contain operational notes or passwords. |
+| Service-like users | May be tied to applications or scheduled tasks. |
+
+Interesting examples:
+
+```text
+daveadmin
+BackupAdmin
+sqlsvc
+sccm_svc
+backup_svc
+```
+
+> [!tip]
+> Admins often have separate daily-use and privileged accounts, such as `dave` and `daveadmin`.
+
+---
+
+# 5. Enumerate Local Groups
+
+## Using net localgroup
+
+```cmd
+net localgroup
+```
+
+## Using PowerShell
+
+```powershell
+Get-LocalGroup
+```
+
+Example:
+
+```powershell
+Get-LocalGroup
+
+Name                                Description
+----                                -----------
+adminteam                           Members of this group are admins to all workstations on the second floor
+BackupUsers
+helpdesk
+Administrators                      Administrators have complete and unrestricted access to the computer/domain
+Remote Desktop Users                Members in this group are granted the right to logon remotely
+```
+
+## What to Look For
+
+| Group | Why It Matters |
+|---|---|
+| `Administrators` | Local admin users. |
+| `Remote Desktop Users` | Users who can RDP. |
+| `Remote Management Users` | Users who can use WinRM. |
+| `Backup Operators` | Can read protected files via backup rights. |
+| Custom admin groups | May imply delegated admin rights. |
+| Backup groups | May control backup software or sensitive file access. |
+| Helpdesk groups | May have support or workstation admin privileges. |
+
+Interesting custom group:
+
+```text
+adminteam
+```
+
+Description:
+
+```text
+Members of this group are admins to all workstations on the second floor
+```
+
+This may not immediately give local admin on the current host, but it may become useful after identifying systems on the second floor.
+
+---
+
+# 6. Enumerate Group Members
+
+Use PowerShell:
+
+```powershell
+Get-LocalGroupMember Administrators
+```
+
+```powershell
+Get-LocalGroupMember "Remote Desktop Users"
+```
+
+```powershell
+Get-LocalGroupMember "Remote Management Users"
+```
+
+```powershell
+Get-LocalGroupMember "Backup Operators"
+```
+
+Check custom groups:
+
+```powershell
+Get-LocalGroupMember adminteam
+```
+
+Example:
+
+```powershell
+Get-LocalGroupMember Administrators
+
+ObjectClass Name                      PrincipalSource
+----------- ----                      ---------------
+User        CLIENTWK220\Administrator Local
+User        CLIENTWK220\daveadmin     Local
+User        CLIENTWK220\backupadmin   Local
+User        CLIENTWK220\offsec        Local
+```
+
+## Why This Matters
+
+This identifies:
+
+- local administrator targets
+- users worth password hunting for
+- users who can RDP or WinRM
+- custom delegated admin groups
+- backup users with broad access
+
+High-value findings:
+
+```text
+CLIENTWK220\daveadmin
+CLIENTWK220\backupadmin
+```
+
+---
+
+# 7. Identify OS, Version, Architecture, and Patch Context
+
+## System Information
+
+```cmd
+systeminfo
+```
+
+Useful fields:
+
+| Field | Why It Matters |
+|---|---|
+| `OS Name` | Identifies Windows edition. |
+| `OS Version` | Helps determine exploit compatibility. |
+| `Build` | Used to map patch level and feature release. |
+| `System Type` | Determines x86 vs x64 payload/tooling. |
+| `Hotfix(s)` | Shows installed KBs. |
+| `Domain` | Indicates domain membership. |
+| `Logon Server` | May reveal domain controller. |
+| `Original Install Date` | Older installs may have legacy misconfigs. |
+
+Example:
+
+```text
+OS Name: Microsoft Windows 11 Pro
+OS Version: 10.0.22621 N/A Build 22621
+System Type: x64-based PC
+```
+
+Interpretation:
+
+```text
+Windows 11 Pro 22H2
+64-bit system
+```
+
+> [!important]
+> Architecture matters. A 64-bit tool will not run on a 32-bit system. A 32-bit shell on a 64-bit system may also affect exploit behavior.
+
+---
+
+# 8. Enumerate Installed Hotfixes
+
+## WMIC
+
+```cmd
+wmic qfe
+```
+
+## PowerShell
+
+```powershell
+Get-HotFix
+```
+
+## Why This Matters
+
+Installed KBs help identify:
+
+- missing patch privilege escalation paths
+- legacy systems
+- vulnerable OS builds
+- patch gaps
+- exploit compatibility
+
+If needed, save `systeminfo` output and analyze offline with tools such as:
+
+```text
+Windows-Exploit-Suggester
+Sherlock
+wesng
+```
+
+---
+
+# 9. Gather Network Interface and DNS Information
+
+## ipconfig /all
 
 ```cmd
 ipconfig /all
 ```
 
-Example output:
+This reveals:
 
-```cmd
-C:\htb> ipconfig /all
+- IP addresses
+- network adapters
+- subnet masks
+- default gateways
+- DNS servers
+- DHCP servers
+- DNS suffixes
+- NetBIOS status
+- multiple network interfaces
 
-Windows IP Configuration
-
-   Host Name . . . . . . . . . . . . : WINLPE-SRV01
-   Primary Dns Suffix  . . . . . . . :
-   Node Type . . . . . . . . . . . . : Hybrid
-   IP Routing Enabled. . . . . . . . : No
-   WINS Proxy Enabled. . . . . . . . : No
-   DNS Suffix Search List. . . . . . : .htb
-
-Ethernet adapter Ethernet1:
-
-   Connection-specific DNS Suffix  . :
-   Description . . . . . . . . . . . : vmxnet3 Ethernet Adapter
-   Physical Address. . . . . . . . . : 00-50-56-B9-C5-4B
-   DHCP Enabled. . . . . . . . . . . : No
-   Autoconfiguration Enabled . . . . : Yes
-   Link-local IPv6 Address . . . . . : fe80::f055:fefd:b1b:9919%9(Preferred)
-   IPv4 Address. . . . . . . . . . . : 192.168.20.56(Preferred)
-   Subnet Mask . . . . . . . . . . . : 255.255.255.0
-   Default Gateway . . . . . . . . . : 192.168.20.1
-   DNS Servers . . . . . . . . . . . : 8.8.8.8
-   NetBIOS over Tcpip. . . . . . . . : Enabled
-
-Ethernet adapter Ethernet0:
-
-   Connection-specific DNS Suffix  . : .htb
-   Description . . . . . . . . . . . : Intel(R) 82574L Gigabit Network Connection
-   Physical Address. . . . . . . . . : 00-50-56-B9-90-94
-   DHCP Enabled. . . . . . . . . . . : Yes
-   Autoconfiguration Enabled . . . . : Yes
-   IPv6 Address. . . . . . . . . . . : dead:beef::e4db:5ea3:2775:8d4d(Preferred)
-   Link-local IPv6 Address . . . . . : fe80::e4db:5ea3:2775:8d4d%4(Preferred)
-   IPv4 Address. . . . . . . . . . . : 10.129.43.8(Preferred)
-   Subnet Mask . . . . . . . . . . . : 255.255.0.0
-   Default Gateway . . . . . . . . . : fe80::250:56ff:feb9:4ddf%4
-                                       10.129.0.1
-   DHCP Server . . . . . . . . . . . : 10.129.0.1
-   DNS Servers . . . . . . . . . . . : 1.1.1.1
-                                       8.8.8.8
-   NetBIOS over Tcpip. . . . . . . . : Enabled
-```
-
----
-
-## What to Look For in `ipconfig /all`
+## What to Look For
 
 | Field | Why It Matters |
 |---|---|
-| Host Name | Identifies the machine name. May reveal role or naming convention. |
-| DNS Suffix | May indicate domain membership or internal DNS namespace. |
-| IPv4 Address | Shows the current network range. |
+| Host Name | Confirms system name. |
+| Primary DNS Suffix | May indicate domain membership. |
+| DNS Suffix Search List | May reveal internal domains. |
+| IPv4 Address | Identifies current subnet. |
 | Subnet Mask | Helps determine network size. |
-| Default Gateway | Shows the router used to reach other networks. |
-| DNS Servers | May reveal domain controllers or internal DNS infrastructure. |
-| Multiple Adapters | May indicate a dual-homed host. |
-| DHCP Server | Can reveal infrastructure systems. |
-| NetBIOS over TCP/IP | May support legacy name resolution or enumeration. |
+| Default Gateway | Shows route out of subnet. |
+| DNS Servers | Often domain controllers in AD environments. |
+| DHCP Server | Infrastructure target. |
+| Multiple Adapters | May indicate dual-homed host. |
+| NetBIOS over TCP/IP | May enable legacy enumeration. |
 
-**Practical tip:** Pay close attention to DNS servers. In Active Directory environments, DNS servers are often domain controllers.
+Example:
 
----
-
-# ARP Table
-
-## Why Check the ARP Cache?
-
-The ARP cache shows IP addresses that the host has recently communicated with on the local network.
-
-This can help identify:
-
-- Nearby hosts
-- Gateways
-- Recently contacted systems
-- Potential lateral movement targets
-- Systems administrators may have connected to
-- RDP or WinRM targets used from this host
-
-Use the following command:
-
-```cmd
-arp -a
-```
-
-Example output:
-
-```cmd
-C:\htb> arp -a
-
-Interface: 10.129.43.8 --- 0x4
-  Internet Address      Physical Address      Type
-  10.129.0.1            00-50-56-b9-4d-df     dynamic
-  10.129.43.12          00-50-56-b9-da-ad     dynamic
-  10.129.43.13          00-50-56-b9-5b-9f     dynamic
-  10.129.255.255        ff-ff-ff-ff-ff-ff     static
-  224.0.0.22            01-00-5e-00-00-16     static
-  224.0.0.252           01-00-5e-00-00-fc     static
-  224.0.0.253           01-00-5e-00-00-fd     static
-  239.255.255.250       01-00-5e-7f-ff-fa     static
-  255.255.255.255       ff-ff-ff-ff-ff-ff     static
-
-Interface: 192.168.20.56 --- 0x9
-  Internet Address      Physical Address      Type
-  192.168.20.255        ff-ff-ff-ff-ff-ff     static
-  224.0.0.22            01-00-5e-00-00-16     static
-  224.0.0.252           01-00-5e-00-00-fc     static
-  239.255.255.250       01-00-5e-7f-ff-fa     static
-  255.255.255.255       ff-ff-ff-ff-ff-ff     static
+```text
+IPv4 Address: 192.168.50.220
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.50.254
+DNS Servers: 8.8.8.8
 ```
 
 ---
 
-## What to Look For in the ARP Table
+# 10. Identify Dual-Homed Hosts
 
-| Item | Meaning |
-|---|---|
-| Dynamic entries | Hosts recently contacted by the system. |
-| Gateway IP | Usually the local router or default gateway. |
-| Multiple interfaces | May indicate the host sits across multiple networks. |
-| Unknown internal IPs | Potential lateral movement targets. |
-| Repeated communication targets | May indicate important servers or admin activity. |
+A dual-homed host has two or more network interfaces or routes into multiple networks.
 
-The ARP cache is useful because it shows systems the host has already interacted with. This can reveal targets that may not have appeared in earlier external scanning.
+Indicators:
 
----
+```text
+Multiple Ethernet adapters
+Multiple IPv4 addresses
+Multiple default gateways
+Multiple internal routes
+Different DNS suffixes per adapter
+Routes to separate subnets
+```
 
-# Routing Table
+Why this matters:
 
-## Why Check the Routing Table?
+```text
+A dual-homed host may provide access to an internal subnet that is unreachable from the original attack box.
+```
 
-The routing table shows how the host sends traffic to different networks.
+Check with:
 
-It can reveal:
-
-- Connected networks
-- Default routes
-- Internal subnets
-- Persistent routes
-- Preferred interfaces
-- IPv4 and IPv6 routing paths
-- Whether the host can reach networks we cannot directly access
-
-Use the following command:
+```cmd
+ipconfig /all
+```
 
 ```cmd
 route print
 ```
 
-Example output:
-
 ```cmd
-C:\htb> route print
-
-===========================================================================
-Interface List
-  9...00 50 56 b9 c5 4b ......vmxnet3 Ethernet Adapter
-  4...00 50 56 b9 90 94 ......Intel(R) 82574L Gigabit Network Connection
-  1...........................Software Loopback Interface 1
-  3...00 00 00 00 00 00 00 e0 Microsoft ISATAP Adapter
-  5...00 00 00 00 00 00 00 e0 Teredo Tunneling Pseudo-Interface
- 13...00 00 00 00 00 00 00 e0 Microsoft ISATAP Adapter #2
-===========================================================================
-
-IPv4 Route Table
-===========================================================================
-Active Routes:
-Network Destination        Netmask          Gateway       Interface  Metric
-          0.0.0.0          0.0.0.0       10.129.0.1      10.129.43.8     25
-          0.0.0.0          0.0.0.0     192.168.20.1    192.168.20.56    271
-       10.129.0.0      255.255.0.0         On-link       10.129.43.8    281
-      10.129.43.8  255.255.255.255         On-link       10.129.43.8    281
-   10.129.255.255  255.255.255.255         On-link       10.129.43.8    281
-        127.0.0.0        255.0.0.0         On-link         127.0.0.1    331
-        127.0.0.1  255.255.255.255         On-link         127.0.0.1    331
-  127.255.255.255  255.255.255.255         On-link         127.0.0.1    331
-     192.168.20.0    255.255.255.0         On-link     192.168.20.56    271
-    192.168.20.56  255.255.255.255         On-link     192.168.20.56    271
-   192.168.20.255  255.255.255.255         On-link     192.168.20.56    271
-        224.0.0.0        240.0.0.0         On-link         127.0.0.1    331
-        224.0.0.0        240.0.0.0         On-link       10.129.43.8    281
-        224.0.0.0        240.0.0.0         On-link     192.168.20.56    271
-  255.255.255.255  255.255.255.255         On-link         127.0.0.1    331
-  255.255.255.255  255.255.255.255         On-link       10.129.43.8    281
-  255.255.255.255  255.255.255.255         On-link     192.168.20.56    271
-===========================================================================
-
-Persistent Routes:
-  Network Address          Netmask  Gateway Address  Metric
-          0.0.0.0          0.0.0.0     192.168.20.1  Default
-===========================================================================
-
-IPv6 Route Table
-===========================================================================
-Active Routes:
- If Metric Network Destination      Gateway
-  4    281 ::/0                     fe80::250:56ff:feb9:4ddf
-  1    331 ::1/128                  On-link
-  4    281 dead:beef::/64           On-link
-  4    281 dead:beef::e4db:5ea3:2775:8d4d/128
-                                    On-link
-  4    281 fe80::/64                On-link
-  9    271 fe80::/64                On-link
-  4    281 fe80::e4db:5ea3:2775:8d4d/128
-                                    On-link
-  9    271 fe80::f055:fefd:b1b:9919/128
-                                    On-link
-  1    331 ff00::/8                 On-link
-  4    281 ff00::/8                 On-link
-  9    271 ff00::/8                 On-link
-===========================================================================
-
-Persistent Routes:
-  None
+arp -a
 ```
 
 ---
 
-## What to Look For in the Routing Table
+# 11. Review ARP Cache
+
+## Command
+
+```cmd
+arp -a
+```
+
+## Why Check ARP?
+
+The ARP cache shows systems the host has recently communicated with on local network segments.
+
+This can reveal:
+
+- nearby hosts
+- gateways
+- recently contacted systems
+- potential lateral movement targets
+- admin workstations
+- servers accessed by the current host
+- hosts not discovered from the attack box
+
+## What to Look For
+
+| Item | Meaning |
+|---|---|
+| Dynamic entries | Recently contacted hosts. |
+| Gateway IP | Router/default gateway. |
+| Multiple interfaces | Possible dual-homed host. |
+| Unknown internal IPs | Potential targets. |
+| Repeated entries | Frequently contacted systems. |
+
+Example:
+
+```cmd
+arp -a
+```
+
+```text
+Interface: 10.129.43.8 --- 0x4
+  Internet Address      Physical Address      Type
+  10.129.0.1            00-50-56-b9-4d-df     dynamic
+  10.129.43.12          00-50-56-b9-da-ad     dynamic
+  10.129.43.13          00-50-56-b9-5b-9f     dynamic
+```
+
+Potential follow-up:
+
+```text
+10.129.43.12
+10.129.43.13
+```
+
+---
+
+# 12. Review Routing Table
+
+## Command
+
+```cmd
+route print
+```
+
+## Why Check Routes?
+
+The routing table shows how traffic leaves the host.
+
+It can reveal:
+
+- directly connected networks
+- hidden internal subnets
+- persistent routes
+- multiple default routes
+- IPv6 routes
+- preferred interfaces
+- additional reachable networks
+
+## What to Look For
 
 | Item | Why It Matters |
 |---|---|
-| `0.0.0.0/0` | Default route used when no specific route exists. |
-| Multiple default routes | May indicate multiple network paths. |
-| On-link networks | Networks directly reachable from the host. |
-| Persistent routes | Manually configured routes that survive reboot. |
-| Interface metrics | Lower metric usually means preferred route. |
-| Internal ranges | May reveal additional reachable subnets. |
-| IPv6 routes | IPv6 may expose paths missed during IPv4-only enumeration. |
+| `0.0.0.0/0` | Default route. |
+| Multiple default routes | Multiple network paths. |
+| On-link routes | Directly reachable networks. |
+| Persistent routes | Manually configured routes. |
+| Interface metrics | Lower metric is usually preferred. |
+| Internal ranges | Extra subnets to investigate. |
+| IPv6 routes | IPv6 may reveal missed attack paths. |
 
-Routing information may not directly give us local admin rights, but it can reveal additional attack paths. A host with access to another subnet may become more valuable after privilege escalation.
+Example interesting routes:
+
+```text
+10.129.0.0/16
+192.168.20.0/24
+```
+
+This suggests the host can reach at least two networks.
 
 ---
 
-# Enumerating Protections
+# 13. Review Active Network Connections
 
-## Why Enumerate Security Protections?
+## Command
 
-Most modern Windows environments use security tools to monitor, alert on, and block suspicious activity.
+```cmd
+netstat -ano
+```
 
-These may include:
+Flags:
 
-- Antivirus
-- Endpoint Detection and Response
-- Application whitelisting
-- Script blocking
-- PowerShell logging
-- Attack Surface Reduction rules
-- Device control
-- Controlled folder access
+| Flag | Purpose |
+|---|---|
+| `-a` | Show all active connections and listening ports. |
+| `-n` | Do not resolve names. |
+| `-o` | Show process ID. |
 
-These protections can interfere with enumeration and exploitation.
+Example:
 
-Public privilege escalation tools and proof-of-concept exploits are commonly detected by antivirus and EDR products. Before running tools, it is important to understand what protections are active.
+```cmd
+netstat -ano
+```
+
+```text
+Proto  Local Address          Foreign Address        State           PID
+TCP    0.0.0.0:80             0.0.0.0:0              LISTENING       3340
+TCP    0.0.0.0:443            0.0.0.0:0              LISTENING       3340
+TCP    0.0.0.0:3306           0.0.0.0:0              LISTENING       3508
+TCP    0.0.0.0:3389           0.0.0.0:0              LISTENING       1148
+TCP    192.168.50.220:3389    192.168.48.3:33770     ESTABLISHED     1148
+TCP    192.168.50.220:4444    192.168.48.3:58386     ESTABLISHED     2064
+```
+
+## What to Look For
+
+| Port / State | Meaning |
+|---|---|
+| `80`, `443` listening | Web server. |
+| `3306` listening | MySQL. |
+| `3389` listening | RDP enabled. |
+| `5985`, `5986` listening | WinRM enabled. |
+| `445` listening | SMB. |
+| Established RDP | Another user may be logged in. |
+| Unknown outbound connections | Possible agents, apps, or C2-like traffic. |
+
+Map PID to process:
+
+```cmd
+tasklist /FI "PID eq 3508"
+```
+
+PowerShell:
+
+```powershell
+Get-Process -Id 3508
+```
+
+> [!important]
+> An active RDP connection from another host may indicate a logged-on user. After privilege escalation, this could become relevant for credential access or session enumeration.
 
 ---
 
-## Antivirus and EDR
+# 14. Check Domain Context
 
-Antivirus and EDR products may detect:
-
-- Known public tools
-- Credential dumping behaviour
-- Suspicious PowerShell usage
-- Abnormal process chains
-- Common living-off-the-land binary abuse
-- Exploit behaviour
-- Encoded commands
-- Reverse shells
-- Unusual parent-child process relationships
-
-Some EDR tools may even detect or block common administrative commands such as:
+## Environment Variables
 
 ```cmd
-net.exe
+echo %USERDOMAIN%
 ```
 
 ```cmd
-tasklist.exe
+echo %LOGONSERVER%
 ```
 
 ```cmd
-whoami.exe
+echo %COMPUTERNAME%
 ```
+
+## Workstation Configuration
 
 ```cmd
-powershell.exe
+net config workstation
 ```
+
+Useful fields:
+
+| Field | Why It Matters |
+|---|---|
+| Workstation domain | Domain or workgroup membership. |
+| Logon domain | Current logon context. |
+| Logon server | May reveal domain controller. |
+| DNS suffix | Internal AD namespace. |
+
+## Domain Controller Discovery
 
 ```cmd
-cmd.exe
+nltest /dsgetdc:
 ```
 
-Context matters. For example, an accountant's workstation launching unusual binaries through `cmd.exe` may be treated as suspicious, even if the same activity would be normal on an administrator's jump box.
+If a domain name is known:
+
+```cmd
+nltest /dsgetdc:<domain>
+```
+
+PowerShell:
+
+```powershell
+[System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+```
+
+> [!note]
+> Some commands may fail if the host is not domain joined, DNS is misconfigured, or current context lacks domain access.
 
 ---
 
-## Check Windows Defender Status
+# 15. Enumerate Installed Applications
 
-Use PowerShell to check Windows Defender status:
+Installed applications may reveal:
+
+- exploitable software
+- credential stores
+- password managers
+- FTP clients
+- remote access tools
+- web stacks
+- database clients
+- VPN software
+- backup software
+- virtualization tools
+
+## Check Program Files
+
+```cmd
+dir "C:\Program Files"
+```
+
+```cmd
+dir "C:\Program Files (x86)"
+```
+
+Also check user directories:
+
+```cmd
+dir "%USERPROFILE%\Downloads"
+```
+
+```cmd
+dir "%USERPROFILE%\Desktop"
+```
+
+```cmd
+dir "%LOCALAPPDATA%\Programs"
+```
+
+---
+
+# 16. Enumerate Installed Applications via Registry
+
+## 32-bit Applications
+
+```powershell
+Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select DisplayName
+```
+
+## 64-bit Applications
+
+```powershell
+Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select DisplayName
+```
+
+## Combined View with Version and Install Path
+
+```powershell
+$INSTALLED = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, InstallLocation
+$INSTALLED += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, InstallLocation
+$INSTALLED | Where-Object { $_.DisplayName -ne $null } | Sort-Object -Property DisplayName -Unique | Format-Table -AutoSize
+```
+
+## Interesting Applications
+
+| Application | Why It Matters |
+|---|---|
+| KeePass | Password database may exist. |
+| FileZilla | Saved FTP credentials may exist. |
+| WinSCP | Saved sessions/credentials. |
+| PuTTY | Saved sessions, keys, proxy creds. |
+| mRemoteNG | Saved RDP/SSH/VNC credentials. |
+| TeamViewer | Remote access configuration. |
+| OpenVPN | VPN profiles and keys. |
+| XAMPP | Apache/MySQL configs and web roots. |
+| MySQL/MSSQL clients | Database access. |
+| Browsers | Saved passwords, cookies, tokens. |
+| Backup software | High-value access and restored data. |
+| VMware/VirtualBox tools | Virtualization context. |
+
+---
+
+# 17. Enumerate Running Processes
+
+## PowerShell
+
+```powershell
+Get-Process
+```
+
+## CMD
+
+```cmd
+tasklist
+```
+
+With services:
+
+```cmd
+tasklist /svc
+```
+
+Map process to PID from `netstat`:
+
+```powershell
+Get-Process -Id <PID>
+```
+
+Example:
+
+```powershell
+Get-Process -Id 3508
+```
+
+## What to Look For
+
+| Process | Possible Meaning |
+|---|---|
+| `httpd.exe` | Apache web server. |
+| `mysqld.exe` | MySQL database. |
+| `w3wp.exe` | IIS worker process. |
+| `sqlservr.exe` | MSSQL server. |
+| `filezilla.exe` | FTP client or server. |
+| `keepass.exe` | Password manager running. |
+| `TeamViewer.exe` | Remote access tool. |
+| `powershell.exe` | Scripts or admin activity. |
+| `cmd.exe` | Interactive shells or scripts. |
+| AV/EDR processes | Defensive tooling. |
+
+Interpretation example:
+
+```text
+httpd.exe + mysqld.exe + XAMPP installed = likely local web stack with database-backed app.
+```
+
+---
+
+# 18. Enumerate Services
+
+Services can reveal:
+
+- privilege escalation vectors
+- unquoted service paths
+- weak service permissions
+- interesting applications
+- service accounts
+- startup binaries
+- web/database stacks
+
+## List Services
+
+```cmd
+sc query
+```
+
+PowerShell:
+
+```powershell
+Get-Service
+```
+
+WMI with paths:
+
+```cmd
+wmic service get name,displayname,pathname,startmode
+```
+
+PowerShell with paths:
+
+```powershell
+Get-CimInstance Win32_Service | Select-Object Name, DisplayName, State, StartMode, StartName, PathName
+```
+
+## What to Look For
+
+| Item | Why It Matters |
+|---|---|
+| `StartName` | Shows service account. |
+| `PathName` | Shows executable path and arguments. |
+| Unquoted paths | Potential service path hijack. |
+| Writable service binary | Replace binary for escalation. |
+| Custom services | More likely to be misconfigured. |
+| Backup/database services | Often privileged and sensitive. |
+
+---
+
+# 19. Enumerate Security Protections
+
+## Why This Matters
+
+Security tools can block or detect:
+
+- public exploits
+- credential dumping
+- PowerShell abuse
+- encoded commands
+- reverse shells
+- LOLBAS abuse
+- suspicious parent-child process chains
+- unsigned binaries
+- script execution
+- tool upload and execution
+
+Before running tools, identify what protections are active.
+
+---
+
+# 20. Check Windows Defender
+
+## PowerShell
 
 ```powershell
 Get-MpComputerStatus
 ```
 
-Example output:
-
-```powershell
-PS C:\htb> Get-MpComputerStatus
-
-AMEngineVersion                 : 1.1.17900.7
-AMProductVersion                : 4.10.14393.2248
-AMServiceEnabled                : True
-AMServiceVersion                : 4.10.14393.2248
-AntispywareEnabled              : True
-AntispywareSignatureAge         : 1
-AntispywareSignatureLastUpdated : 3/28/2021 2:59:13 AM
-AntispywareSignatureVersion     : 1.333.1470.0
-AntivirusEnabled                : True
-AntivirusSignatureAge           : 1
-AntivirusSignatureLastUpdated   : 3/28/2021 2:59:12 AM
-AntivirusSignatureVersion       : 1.333.1470.0
-BehaviorMonitorEnabled          : False
-ComputerID                      : 54AF7DE4-3C7E-4DA0-87AC-831B045B9063
-ComputerState                   : 0
-FullScanAge                     : 4294967295
-FullScanEndTime                 :
-FullScanStartTime               :
-IoavProtectionEnabled           : False
-LastFullScanSource              : 0
-LastQuickScanSource             : 0
-NISEnabled                      : False
-NISEngineVersion                : 0.0.0.0
-NISSignatureAge                 : 4294967295
-NISSignatureLastUpdated         :
-NISSignatureVersion             : 0.0.0.0
-OnAccessProtectionEnabled       : False
-QuickScanAge                    : 4294967295
-QuickScanEndTime                :
-QuickScanStartTime              :
-RealTimeProtectionEnabled       : False
-RealTimeScanDirection           : 0
-PSComputerName                  :
-```
-
----
-
-## Useful Windows Defender Fields
+Important fields:
 
 | Field | Meaning |
 |---|---|
-| `AMServiceEnabled` | Defender antimalware service is enabled. |
-| `AntivirusEnabled` | Antivirus functionality is enabled. |
-| `AntispywareEnabled` | Antispyware functionality is enabled. |
-| `RealTimeProtectionEnabled` | Real-time protection status. |
-| `BehaviorMonitorEnabled` | Behaviour monitoring status. |
-| `IoavProtectionEnabled` | Scans files downloaded from the internet or opened from attachments. |
-| `OnAccessProtectionEnabled` | Indicates whether files are scanned when accessed. |
-| `AntivirusSignatureLastUpdated` | Shows how recent the AV signatures are. |
+| `AMServiceEnabled` | Defender antimalware service enabled. |
+| `AntivirusEnabled` | Antivirus enabled. |
+| `AntispywareEnabled` | Antispyware enabled. |
+| `RealTimeProtectionEnabled` | Real-time scanning enabled. |
+| `BehaviorMonitorEnabled` | Behavior monitoring enabled. |
+| `IoavProtectionEnabled` | Scans downloaded/attachment files. |
+| `OnAccessProtectionEnabled` | Scans files when accessed. |
+| `AntivirusSignatureLastUpdated` | Signature freshness. |
 
-**Practical tip:** Do not only check whether Defender is installed. Check whether real-time protection, behaviour monitoring, and on-access protection are actually enabled.
+## Service Check
+
+```cmd
+sc query windefend
+```
+
+## Security Center AV Query
+
+```cmd
+wmic /namespace:\\root\SecurityCenter2 path AntiVirusProduct get displayName,pathToSignedProductExe
+```
+
+> [!tip]
+> Do not only check whether Defender exists. Check whether real-time protection and behavior monitoring are enabled.
 
 ---
 
-# Application Whitelisting
+# 21. Identify AV / EDR Processes
 
-## What Is Application Whitelisting?
-
-Application whitelisting controls which applications, scripts, installers, or files users are allowed to run.
-
-In Windows environments, this may be implemented using:
-
-- AppLocker
-- Windows Defender Application Control
-- Third-party application control products
-
-Application whitelisting may block non-admin users from running tools such as:
+## tasklist
 
 ```cmd
-cmd.exe
+tasklist
 ```
 
-```powershell
-powershell.exe
-```
+## WMIC
 
 ```cmd
-net.exe
+wmic process get ProcessId,Name,ExecutablePath
 ```
 
-It may also restrict specific file types, such as:
+Look for vendor processes related to:
 
-- `.exe`
-- `.ps1`
-- `.bat`
-- `.cmd`
-- `.vbs`
-- `.js`
-- `.msi`
-- `.dll`
+```text
+Defender
+CrowdStrike
+SentinelOne
+Sophos
+Carbon Black
+McAfee
+Trellix
+Symantec
+Trend Micro
+Elastic
+Cylance
+ESET
+Bitdefender
+Kaspersky
+Palo Alto Cortex
+```
 
-If application control is enforced, our usual enumeration or exploitation tools may not run. We may need to find allowed paths, allowed binaries, or alternative execution methods.
+> [!warning]
+> Some EDRs alert on ordinary commands when executed from suspicious contexts. Tool choice and process chain matter.
 
 ---
 
-## AppLocker
+# 22. Enumerate AppLocker
 
-AppLocker is a Microsoft application control feature that can restrict which users or groups are allowed to run specific files.
+## What AppLocker Controls
 
-AppLocker can control:
+AppLocker can restrict:
 
-- Executables
-- Scripts
+- executables
+- scripts
 - Windows Installer files
 - DLLs
-- Packaged apps
+- packaged apps
 
 Rules may be based on:
 
-- File path
-- File hash
-- Publisher signature
+- path
+- hash
+- publisher signature
 
----
+Common default allow paths:
 
-## List Effective AppLocker Rules
-
-Use the following PowerShell command to view effective AppLocker rules:
-
-```powershell
-Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
+```text
+%WINDIR%\*
+%PROGRAMFILES%\*
 ```
 
-Example output:
+Common blocked user-writable paths:
 
-```powershell
-PS C:\htb> Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
-
-PublisherConditions : {*\*\*,0.0.0.0-*}
-PublisherExceptions : {}
-PathExceptions      : {}
-HashExceptions      : {}
-Id                  : a9e18c21-ff8f-43cf-b9fc-db40eed693ba
-Name                : (Default Rule) All signed packaged apps
-Description         : Allows members of the Everyone group to run packaged apps that are signed.
-UserOrGroupSid      : S-1-1-0
-Action              : Allow
-
-PathConditions      : {%PROGRAMFILES%\*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : 921cc481-6e17-4653-8f75-050b80acca20
-Name                : (Default Rule) All files located in the Program Files folder
-Description         : Allows members of the Everyone group to run applications that are located in the Program Files folder.
-UserOrGroupSid      : S-1-1-0
-Action              : Allow
-
-PathConditions      : {%WINDIR%\*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : a61c8b2c-a319-4cd0-9690-d2177cad7b51
-Name                : (Default Rule) All files located in the Windows folder
-Description         : Allows members of the Everyone group to run applications that are located in the Windows folder.
-UserOrGroupSid      : S-1-1-0
-Action              : Allow
-
-PathConditions      : {*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : fd686d83-a829-4351-8ff4-27c7de5755d2
-Name                : (Default Rule) All files
-Description         : Allows members of the local Administrators group to run all applications.
-UserOrGroupSid      : S-1-5-32-544
-Action              : Allow
-
-PublisherConditions : {*\*\*,0.0.0.0-*}
-PublisherExceptions : {}
-PathExceptions      : {}
-HashExceptions      : {}
-Id                  : b7af7102-efde-4369-8a89-7a6a392d1473
-Name                : (Default Rule) All digitally signed Windows Installer files
-Description         : Allows members of the Everyone group to run digitally signed Windows Installer files.
-UserOrGroupSid      : S-1-1-0
-Action              : Allow
-
-PathConditions      : {%WINDIR%\Installer\*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : 5b290184-345a-4453-b184-45305f6d9a54
-Name                : (Default Rule) All Windows Installer files in %systemdrive%\Windows\Installer
-Description         : Allows members of the Everyone group to run all Windows Installer files located in %systemdrive%\Windows\Installer.
-UserOrGroupSid      : S-1-1-0
-Action              : Allow
-
-PathConditions      : {*.*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : 64ad46ff-0d71-4fa0-a30b-3f3d30c5433d
-Name                : (Default Rule) All Windows Installer files
-Description         : Allows members of the local Administrators group to run all Windows Installer files.
-UserOrGroupSid      : S-1-5-32-544
-Action              : Allow
-
-PathConditions      : {%PROGRAMFILES%\*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : 06dce67b-934c-454f-a263-2515c8796a5d
-Name                : (Default Rule) All scripts located in the Program Files folder
-Description         : Allows members of the Everyone group to run scripts that are located in the Program Files folder.
-UserOrGroupSid      : S-1-1-0
-Action              : Allow
-
-PathConditions      : {%WINDIR%\*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : 9428c672-5fc3-47f4-808a-a0011f36dd2c
-Name                : (Default Rule) All scripts located in the Windows folder
-Description         : Allows members of the Everyone group to run scripts that are located in the Windows folder.
-UserOrGroupSid      : S-1-1-0
-Action              : Allow
-
-PathConditions      : {*}
-PathExceptions      : {}
-PublisherExceptions : {}
-HashExceptions      : {}
-Id                  : ed97d0cb-15ff-430f-b82c-8d7832957725
-Name                : (Default Rule) All scripts
-Description         : Allows members of the local Administrators group to run all scripts.
-UserOrGroupSid      : S-1-5-32-544
-Action              : Allow
+```text
+C:\Users\<user>\Desktop
+C:\Users\<user>\Downloads
+C:\Users\<user>\AppData
+C:\Users\Public
+C:\Windows\Temp
 ```
 
 ---
 
-## What to Look For in AppLocker Rules
+# 23. List Effective AppLocker Rules
+
+```powershell
+Get-AppLockerPolicy -Effective | Select-Object -ExpandProperty RuleCollections
+```
+
+What to inspect:
 
 | Item | Why It Matters |
 |---|---|
-| `Action` | Shows whether the rule allows or denies execution. |
-| `UserOrGroupSid` | Shows who the rule applies to. |
-| `PathConditions` | Shows allowed or blocked file paths. |
-| `PublisherConditions` | Shows whether signed binaries are allowed. |
-| `HashExceptions` | Shows specific file hashes excluded from rules. |
-| `PathExceptions` | Shows paths excluded from a rule. |
-| Script rules | May affect PowerShell, batch, VBS, or JavaScript execution. |
-| Executable rules | May affect `.exe` payloads and tools. |
-| MSI rules | May affect installer-based techniques. |
-
-Default AppLocker rules often allow execution from:
-
-- `%WINDIR%\*`
-- `%PROGRAMFILES%\*`
-
-They may block execution from user-writable directories such as:
-
-- `Downloads`
-- `Desktop`
-- `Temp`
-- `AppData`
-- `C:\Users\Public`
+| `Action` | Allow or deny. |
+| `UserOrGroupSid` | Who rule applies to. |
+| `PathConditions` | Allowed or blocked paths. |
+| `PublisherConditions` | Signed binary rules. |
+| `HashExceptions` | Specific file exceptions. |
+| `PathExceptions` | Excluded paths. |
+| Script rules | Affect `.ps1`, `.bat`, `.cmd`, `.vbs`, `.js`. |
+| Executable rules | Affect `.exe`. |
+| MSI rules | Affect installer techniques. |
+| DLL rules | Affect DLL loading. |
 
 ---
 
-## Test AppLocker Policy
+# 24. Test AppLocker Policy
 
-We can test whether a specific file would be allowed or denied.
+Test whether a file would be allowed or denied.
 
 ```powershell
 Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\cmd.exe -User Everyone
@@ -673,27 +1118,269 @@ Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\cmd.
 
 Example output:
 
-```powershell
-PS C:\htb> Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\cmd.exe -User Everyone
-
+```text
 FilePath                    PolicyDecision MatchingRule
 --------                    -------------- ------------
-C:\Windows\System32\cmd.exe         Denied c:\windows\system32\cmd.exe
+C:\Windows\System32\cmd.exe Denied         c:\windows\system32\cmd.exe
 ```
 
-In this example, `cmd.exe` is denied for the `Everyone` group.
+If `cmd.exe` or `powershell.exe` is denied, enumeration and exploitation methods must adapt.
 
-If `cmd.exe` or `powershell.exe` is denied, this can significantly affect enumeration and exploitation. Alternative methods may be required, depending on the rules of engagement.
+Test other paths:
+
+```powershell
+Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -User Everyone
+```
+
+```powershell
+Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Users\Public\tool.exe -User Everyone
+```
 
 ---
 
-# Practical Situational Awareness Workflow
+# 25. Check PowerShell Language Mode
 
-A practical first-pass workflow after gaining access to a Windows host:
+```powershell
+$ExecutionContext.SessionState.LanguageMode
+```
+
+Possible values:
+
+```text
+FullLanguage
+ConstrainedLanguage
+NoLanguage
+RestrictedLanguage
+```
+
+Why it matters:
+
+| Mode | Impact |
+|---|---|
+| `FullLanguage` | Normal PowerShell functionality. |
+| `ConstrainedLanguage` | Blocks many .NET and advanced features. |
+| `NoLanguage` | No script text execution. |
+| `RestrictedLanguage` | Heavily limited syntax. |
 
 ---
 
-## 1. Identify Basic Host Information
+# 26. Check PowerShell Execution Policy
+
+```powershell
+Get-ExecutionPolicy -List
+```
+
+Current-process bypass:
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process
+```
+
+> [!note]
+> Execution policy is not a security boundary, but it can affect how scripts run.
+
+---
+
+# 27. Pull Findings Together
+
+After running situational awareness checks, summarize the host.
+
+Example summary:
+
+```text
+Current user: CLIENTWK220\dave
+Groups: helpdesk, Remote Desktop Users, Users
+Privileged targets: daveadmin, BackupAdmin
+OS: Windows 11 Pro Build 22621 x64
+Network: 192.168.50.220/24 via 192.168.50.254
+Listening services: 80, 443, 3306, 3389
+Active sessions: RDP from 192.168.48.3
+Installed apps: KeePass, FileZilla, XAMPP, 7-Zip
+Running apps: httpd, mysqld, filezilla
+Protections: Defender status checked, AppLocker checked
+Potential next steps: credential hunting, web/database config review, KeePass search, RDP/session investigation, service enumeration
+```
+
+This converts raw enumeration into an actionable plan.
+
+---
+
+# Practical Operator Workflow
+
+## Phase 1 – Identity and Access
+
+```cmd
+hostname
+whoami
+whoami /priv
+whoami /groups
+```
+
+Then:
+
+```powershell
+Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember Administrators
+Get-LocalGroupMember "Remote Desktop Users"
+Get-LocalGroupMember "Remote Management Users"
+Get-LocalGroupMember "Backup Operators"
+```
+
+Ask:
+
+```text
+Who am I?
+Am I privileged?
+Can I RDP or WinRM?
+Are there admin-like local users?
+Are there custom groups with useful descriptions?
+```
+
+---
+
+## Phase 2 – Host and OS
+
+```cmd
+systeminfo
+wmic qfe
+```
+
+```powershell
+Get-HotFix
+```
+
+Ask:
+
+```text
+What OS is this?
+What architecture is it?
+Is it old or missing patches?
+Can known local exploits apply?
+```
+
+---
+
+## Phase 3 – Network
+
+```cmd
+ipconfig /all
+arp -a
+route print
+netstat -ano
+```
+
+Ask:
+
+```text
+What subnet am I on?
+Is this host dual-homed?
+What systems has it contacted?
+What services are listening?
+Are other users connected?
+Can this host reach networks I cannot?
+```
+
+---
+
+## Phase 4 – Domain Context
+
+```cmd
+echo %USERDOMAIN%
+echo %LOGONSERVER%
+net config workstation
+nltest /dsgetdc:
+```
+
+Ask:
+
+```text
+Is the host domain joined?
+What domain context exists?
+Can I identify a domain controller?
+```
+
+---
+
+## Phase 5 – Applications and Processes
+
+```cmd
+dir "C:\Program Files"
+dir "C:\Program Files (x86)"
+dir "%USERPROFILE%\Downloads"
+tasklist
+tasklist /svc
+```
+
+```powershell
+Get-Process
+Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select DisplayName
+Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select DisplayName
+```
+
+Ask:
+
+```text
+What software is installed?
+What software is running?
+Are there password managers, FTP clients, VPNs, web stacks, databases, or backup tools?
+```
+
+---
+
+## Phase 6 – Services
+
+```cmd
+sc query
+wmic service get name,displayname,pathname,startmode
+```
+
+```powershell
+Get-CimInstance Win32_Service | Select-Object Name, DisplayName, State, StartMode, StartName, PathName
+```
+
+Ask:
+
+```text
+Are custom services running?
+Do services run as privileged accounts?
+Are service paths misconfigured?
+Are service binaries writable?
+```
+
+---
+
+## Phase 7 – Protections and Execution Constraints
+
+```powershell
+Get-MpComputerStatus
+Get-AppLockerPolicy -Effective | Select-Object -ExpandProperty RuleCollections
+Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\cmd.exe -User Everyone
+$ExecutionContext.SessionState.LanguageMode
+Get-ExecutionPolicy -List
+```
+
+```cmd
+sc query windefend
+tasklist
+wmic /namespace:\\root\SecurityCenter2 path AntiVirusProduct get displayName,pathToSignedProductExe
+```
+
+Ask:
+
+```text
+What security controls are running?
+Will common tools be detected?
+Is PowerShell restricted?
+Is AppLocker enforcing path or publisher rules?
+Where can binaries/scripts execute from?
+```
+
+---
+
+# Command Reference
+
+## Identity
 
 ```cmd
 hostname
@@ -711,13 +1398,61 @@ whoami /priv
 whoami /groups
 ```
 
+---
+
+## Users and Groups
+
 ```cmd
-systeminfo
+net user
+```
+
+```cmd
+net localgroup
+```
+
+```powershell
+Get-LocalUser
+```
+
+```powershell
+Get-LocalGroup
+```
+
+```powershell
+Get-LocalGroupMember Administrators
+```
+
+```powershell
+Get-LocalGroupMember "Remote Desktop Users"
+```
+
+```powershell
+Get-LocalGroupMember "Remote Management Users"
+```
+
+```powershell
+Get-LocalGroupMember "Backup Operators"
 ```
 
 ---
 
-## 2. Gather Network Context
+## OS and Patches
+
+```cmd
+systeminfo
+```
+
+```cmd
+wmic qfe
+```
+
+```powershell
+Get-HotFix
+```
+
+---
+
+## Network
 
 ```cmd
 ipconfig /all
@@ -737,7 +1472,7 @@ netstat -ano
 
 ---
 
-## 3. Check Domain Context
+## Domain Context
 
 ```cmd
 echo %USERDOMAIN%
@@ -745,6 +1480,10 @@ echo %USERDOMAIN%
 
 ```cmd
 echo %LOGONSERVER%
+```
+
+```cmd
+echo %COMPUTERNAME%
 ```
 
 ```cmd
@@ -757,7 +1496,73 @@ nltest /dsgetdc:
 
 ---
 
-## 4. Check Security Protections
+## Installed Applications
+
+```cmd
+dir "C:\Program Files"
+```
+
+```cmd
+dir "C:\Program Files (x86)"
+```
+
+```cmd
+dir "%USERPROFILE%\Downloads"
+```
+
+```powershell
+Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select DisplayName
+```
+
+```powershell
+Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select DisplayName
+```
+
+```powershell
+$INSTALLED = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, InstallLocation
+$INSTALLED += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, InstallLocation
+$INSTALLED | Where-Object { $_.DisplayName -ne $null } | Sort-Object -Property DisplayName -Unique | Format-Table -AutoSize
+```
+
+---
+
+## Processes and Services
+
+```cmd
+tasklist
+```
+
+```cmd
+tasklist /svc
+```
+
+```cmd
+tasklist /FI "PID eq <PID>"
+```
+
+```powershell
+Get-Process
+```
+
+```powershell
+Get-Process -Id <PID>
+```
+
+```cmd
+sc query
+```
+
+```cmd
+wmic service get name,displayname,pathname,startmode
+```
+
+```powershell
+Get-CimInstance Win32_Service | Select-Object Name, DisplayName, State, StartMode, StartName, PathName
+```
+
+---
+
+## Defender and AV
 
 ```powershell
 Get-MpComputerStatus
@@ -768,84 +1573,217 @@ sc query windefend
 ```
 
 ```cmd
-tasklist
+wmic /namespace:\\root\SecurityCenter2 path AntiVirusProduct get displayName,pathToSignedProductExe
 ```
 
 ```cmd
-wmic /namespace:\\root\SecurityCenter2 path AntiVirusProduct get displayName,pathToSignedProductExe
+tasklist
 ```
 
 ---
 
-## 5. Check Application Control
+## AppLocker and PowerShell Restrictions
 
 ```powershell
-Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
+Get-AppLockerPolicy -Effective | Select-Object -ExpandProperty RuleCollections
 ```
 
 ```powershell
 Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\cmd.exe -User Everyone
 ```
 
+```powershell
+Get-AppLockerPolicy -Local | Test-AppLockerPolicy -Path C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -User Everyone
+```
+
+```powershell
+$ExecutionContext.SessionState.LanguageMode
+```
+
+```powershell
+Get-ExecutionPolicy -List
+```
+
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process
+```
+
 ---
 
-# How This Supports Privilege Escalation
+# Interpreting Findings
 
-Situational awareness can help identify privilege escalation opportunities by revealing:
+## High-Value User Findings
 
-- Missing patches from OS version information
-- Weak host placement in the network
-- Interesting network interfaces
-- Reachable internal services
-- Security controls that must be avoided
-- Allowed execution paths
-- Blocked tools or binaries
-- Whether public tooling is likely to be detected
+| Finding | Possible Follow-Up |
+|---|---|
+| User in `Remote Desktop Users` | Try RDP if credentials are known. |
+| User in `Remote Management Users` | Try WinRM if credentials are known. |
+| User has `SeImpersonatePrivilege` | Test Potato-style escalation. |
+| User has `SeBackupPrivilege` | Attempt protected file/registry hive reads. |
+| Local admin-like accounts exist | Hunt credentials for those users. |
+| Helpdesk/custom support groups | Check delegated permissions. |
+| Backup users/groups | Investigate backup tools and file access. |
 
-Example:
+---
 
-If AppLocker blocks execution from `C:\Users\Public\Downloads` but allows execution from `%WINDIR%`, we may need to look for writable subdirectories inside allowed paths or use trusted binaries already present on the system.
+## High-Value Host Findings
+
+| Finding | Possible Follow-Up |
+|---|---|
+| Legacy OS or missing patches | Check local exploit compatibility. |
+| x64 OS with x86 shell | Consider architecture before running exploits. |
+| Dual-homed host | Investigate pivoting opportunities. |
+| Active RDP session | Check logged-on users after privilege escalation. |
+| Web/database ports open | Review application configs. |
+| KeePass installed | Search for `.kdbx` files. |
+| FileZilla installed | Search for saved FTP credentials. |
+| XAMPP installed/running | Inspect web roots and database configs. |
+| AppLocker enabled | Identify allowed execution paths. |
+| Defender/EDR active | Avoid noisy public tooling. |
+
+---
+
+# Common Next Steps After Situational Awareness
+
+Depending on findings, continue into:
+
+- [[Windows Credential Hunting]]
+- [[Windows Service Enumeration]]
+- [[Windows Privilege Escalation – Installed Applications]]
+- [[Windows Privilege Escalation – Missing Patches]]
+- [[Windows Privilege Escalation – Scheduled Tasks]]
+- [[Windows Privilege Escalation – AlwaysInstallElevated]]
+- [[Windows Privilege Escalation – JuicyPotato]]
+- [[Windows Privilege Escalation – AppLocker Bypass]]
+- [[Windows Post-Exploitation – Pillaging]]
+- [[Active Directory Enumeration]]
+- [[Lateral Movement]]
+
+---
+
+# Troubleshooting
+
+## PowerShell is blocked
+
+Try CMD equivalents:
+
+```cmd
+whoami /groups
+net user
+net localgroup
+ipconfig /all
+route print
+netstat -ano
+tasklist
+sc query
+wmic qfe
+```
+
+---
+
+## Commands are blocked by AppLocker
+
+Check policy:
+
+```powershell
+Get-AppLockerPolicy -Effective | Select-Object -ExpandProperty RuleCollections
+```
+
+Identify allowed paths and signed binaries.
+
+---
+
+## `Get-LocalUser` is unavailable
+
+Use legacy commands:
+
+```cmd
+net user
+```
+
+```cmd
+net localgroup
+```
+
+---
+
+## `wmic` is unavailable
+
+Use PowerShell alternatives:
+
+```powershell
+Get-HotFix
+```
+
+```powershell
+Get-CimInstance Win32_OperatingSystem
+```
+
+```powershell
+Get-CimInstance Win32_Service
+```
+
+---
+
+## AV blocks tools
+
+Use built-in commands first.
+
+Delay tool execution until you understand:
+
+- Defender status
+- AppLocker policy
+- EDR processes
+- allowed execution paths
+- rules of engagement
 
 ---
 
 # Key Takeaways
 
-- Situational awareness should be performed before attempting privilege escalation.
-- Network information can reveal additional reachable networks and lateral movement paths.
-- The ARP cache can identify systems the host has recently communicated with.
-- The routing table can reveal dual-homed systems and hidden network paths.
-- Defender, AV, EDR, and AppLocker may interfere with tooling.
-- AppLocker rules can restrict common binaries, scripts, and installers.
-- Understanding protections early helps avoid wasted time and unnecessary detections.
-- Manual checks are essential when tools cannot run or are likely to be blocked.
+- Situational awareness should come before exploitation.
+- Start with identity, privileges, groups, OS, and network context.
+- Local users and groups reveal privilege targets and access paths.
+- Network routes, ARP cache, and active connections reveal reachable systems and possible pivots.
+- Installed applications and running processes reveal credential stores, services, and attack surfaces.
+- Defender, EDR, AppLocker, and PowerShell restrictions shape what tools and techniques are safe or possible.
+- Convert raw enumeration into an actionable plan before attempting privilege escalation.
+- Manual commands are essential when automated tools are blocked or too noisy.
 
 ---
 
-# Quick Reference
+# Related Notes
 
-| Area | Command |
-|---|---|
-| Interface and DNS info | `ipconfig /all` |
-| ARP cache | `arp -a` |
-| Routing table | `route print` |
-| Current user | `whoami` |
-| User privileges | `whoami /priv` |
-| User groups | `whoami /groups` |
-| Host information | `systeminfo` |
-| Defender status | `Get-MpComputerStatus` |
-| AppLocker rules | `Get-AppLockerPolicy -Effective \| select -ExpandProperty RuleCollections` |
-| Test AppLocker path | `Get-AppLockerPolicy -Local \| Test-AppLockerPolicy -Path <path> -User Everyone` |
-
----
-
-## Summary
-
-Situational awareness is about understanding the host, network, and defensive controls before taking action.
-
-Good enumeration helps us choose the right privilege escalation path, avoid blocked techniques, and identify wider opportunities for lateral movement.
+- [[Windows Privilege Escalation]]
+- [[Windows Enumeration]]
+- [[Windows Credential Hunting]]
+- [[Windows Services]]
+- [[Windows Networking]]
+- [[AppLocker]]
+- [[Windows Defender]]
+- [[EDR]]
+- [[PowerShell]]
+- [[Local Users and Groups]]
+- [[SeImpersonatePrivilege]]
+- [[Windows Post-Exploitation]]
+- [[Active Directory Enumeration]]
 
 ---
 
-## Tags
+# Tags
 
-#Windows #PrivilegeEscalation #WindowsPrivilegeEscalation #SituationalAwareness #Enumeration #NetworkEnumeration #ARP #RoutingTable #AppLocker #WindowsDefender #EDR #AV #HTB #Pentesting #OSCP
+#windows
+#privilege-escalation
+#situational-awareness
+#enumeration
+#network-enumeration
+#users-and-groups
+#installed-applications
+#running-processes
+#services
+#defender
+#edr
+#applocker
+#powershell
+#pentesting
+#oscp

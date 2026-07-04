@@ -1,5 +1,3 @@
-# Linux Privilege Escalation – Special Permissions (SUID / SGID)
-
 ## Overview
 
 Linux supports **special permission bits** that modify how executables run.
