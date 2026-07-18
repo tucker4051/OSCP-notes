@@ -1,0 +1,1830 @@
+{
+  "cascadeColors": false,
+  "colorBackground": false,
+  "palette": [
+    {
+      "id": "xEP92qFm6gNRsia9zN5rR",
+      "name": "Rosewater",
+      "value": "#f2d5cf"
+    },
+    {
+      "id": "yho-4vaaBLXUjf_5y9Qei",
+      "name": "Flamingo",
+      "value": "#eebebe"
+    },
+    {
+      "id": "1bNz4MQXB8J8ZoFppOkF0",
+      "name": "Pink",
+      "value": "#f4b8e4"
+    },
+    {
+      "id": "r5Vdm8_tj9toO86m1Zv75",
+      "name": "Mauve",
+      "value": "#ca9ee6"
+    },
+    {
+      "id": "kcNyiuFITQebEw2NuBdpi",
+      "name": "Red",
+      "value": "#e78284"
+    },
+    {
+      "id": "Af3zCtM3EEHiHJmHb0eEO",
+      "name": "Maroon",
+      "value": "#ea999c"
+    },
+    {
+      "id": "OfEPmG5FohAfJWLtrXGjS",
+      "name": "Peach",
+      "value": "#ef9f76"
+    },
+    {
+      "id": "tOrlg72Ey1lxtpwB-hEbI",
+      "name": "Yellow",
+      "value": "#e5c890"
+    },
+    {
+      "id": "W3rbf8NYDKjNckRCXk0u_",
+      "name": "Green",
+      "value": "#a6d189"
+    },
+    {
+      "id": "Rt7xQpQWbB2B2OJ2juCf0",
+      "name": "Teal",
+      "value": "#81c8be"
+    },
+    {
+      "id": "QFrLiwimtqJp_seXT_Jth",
+      "name": "Sky",
+      "value": "#99d1db"
+    },
+    {
+      "id": "XLQl_o4Y3piAjKB0A_6gP",
+      "name": "Sapphire",
+      "value": "#85c1dc"
+    },
+    {
+      "id": "ftpb0DzydzCY1hdJfmqM7",
+      "name": "Blue",
+      "value": "#8caaee"
+    },
+    {
+      "id": "1sTFxjEVgSfPBD7CWLdvp",
+      "name": "Lavendar",
+      "value": "#babbf1"
+    }
+  ],
+  "fileColors": [
+    {
+      "path": "Temp Course Notes",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "/",
+      "color": "XLQl_o4Y3piAjKB0A_6gP"
+    },
+    {
+      "path": "Scratch Pad",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "00 - Start Here/00.01 - Pentest Workflow.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "00 - Start Here/00.02 - CTF Box Methodology.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "00 - Start Here/00.03 - Common Ports.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "00 - Start Here",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "03 - Web Application Attacks",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "05 - Privilege Escalation",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "06 - Credential Attacks",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "07 - Active Directory",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "09 - Post Exploitation & Evasion",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "10 - Tools & Quick Commands",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "99 - Templates",
+      "color": "ftpb0DzydzCY1hdJfmqM7"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.01 - Reconnaissance",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.02 - General Enumeration",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.04 - Database Services",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.05 - Remote Management",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.01 - Reconnaissance/01.01.01 - Footprinting Tools.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.01 - Reconnaissance/01.01.02 - Certificate and Domain Search.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.01 - Reconnaissance/01.01.03 - Certificate Transparency Logs.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.01 - Reconnaissance/01.01.04 - Recon Frameworks OSINT.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.02 - General Enumeration/01.02.01 - Service Enumeration Index.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.02 - General Enumeration/01.02.02 - Automated Fingerprinting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.01 - DNS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.02 - SNMP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.03 - IPMI.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.04 - FTP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.05 - NFS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.06 - SMB.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.07 - SMTP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.08 - IMAP & POP3.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.04 - Database Services/01.04.01 - MySQL.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.04 - Database Services/01.04.02 - MSSQL.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.04 - Database Services/01.04.03 - Oracle TNS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.05 - Remote Management/01.05.01 - Linux Remote Management Protocols.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "01 - Reconnaissance & Enumeration/01.05 - Remote Management/01.05.02 - Windows Remote Management Protocols.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.01 - Vulnerability Scanning",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.02 - Exploit Research",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.03 - Application Discovery",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.04 - Credentials & Misconfigurations",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.01 - Vulnerability Scanning/02.01.01 - Nessus.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.01 - Vulnerability Scanning/02.01.02 - OpenVAS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.02 - Exploit Research/02.02.01 - Exploit Research Methodology.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.02 - Exploit Research/02.02.02 - Public Exploit Code Review.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.02 - Exploit Research/02.02.03 - Exploit Validation Checklist.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.02 - Exploit Research/02.02.04 - Web Exploit Adaptation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.02 - Exploit Research/02.02.05 - Buffer Overflow Exploit Adaptation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.03 - Application Discovery/02.03.01 - Application Discovery Methodology.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.03 - Application Discovery/02.03.02 - Web Technology Fingerprinting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.03 - Application Discovery/02.03.03 - CMS Identification.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.03 - Application Discovery/02.03.04 - Admin Panel Discovery.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.04 - Credentials & Misconfigurations/02.04.01 - Default Credentials Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.04 - Credentials & Misconfigurations/02.04.02 - Common Default Credentials.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.04 - Credentials & Misconfigurations/02.04.03 - Default Credential Testing Strategy.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.04 - Credentials & Misconfigurations/02.04.05 - Misconfiguration Checks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "02 - Vulnerability Discovery & Exploit Research/02.05 - Findings Prioritisation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.01 - Overview & Methodology",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.01 - Overview & Methodology/03.01.01 - Web Application Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.01 - Command Injection Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.02 - Detection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.03 - Injection Operators.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.04 - Injecting Commands.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.05 - Identifying Filters.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.06 - Bypassing Blacklisted Characters.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.07 - Bypassing Blacklisted Commands.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.08 - Bypassing Space Filters.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.09 - Advanced Command Obfuscation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.10 - Command Injection/03.02.10.10 - Evasion Tools.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.01 - SQL Injection Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.02 - Subverting Query Logic.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.03 - Using Comments.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.04 - UNION Clause.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.05 - UNION Injection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.06 - Database Enumeration.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.07 - Blind Injection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.08 - Reading Files.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.09 - Writing Files.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.20 - SQL Injection/03.02.20.10 - Manual Code Execution.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.01 - Injection Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.02 - Command Injection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.03 - SQL Injection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.02 - Injection Attacks/03.02.04 - XXE.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.01 - File Inclusion Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.09 - RCE via Remote File Inclusion.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.05 - File Disclosure - PHP Filters.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.03 - Automated Scanning.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.07 - RCE via PHP Wrappers.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.06 - RCE via Log Poisoning.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.08 - RCE via LFI and File Uploads.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.04 - File Disclosure - Basic Bypasses.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.10 - File Inclusion/03.03.10.02 - File Disclosure - Local File Inclusion.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.01 - File Upload Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.02 - Client-Side Validation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.03 - Absent Validation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.04 - Blacklist Filters.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.05 - Whitelist Filters.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.06 - Type Filters.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.07 - Limited File Uploads.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.20 - File Upload Attacks/03.03.20.08 - Upload Exploitation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.01 - File and Upload Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.02 - File Inclusion.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.03 - File Upload Attacks.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.03 - File & Upload Attacks/03.03.04 - Web Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.01 - Client-Side Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.02 - Cross-Site Scripting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.01 - Cross-Site Scripting Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.03 - Types.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.07 - Session Hijacking.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.05 - Stored XSS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.04 - Reflected XSS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.06 - DOM-Based XSS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.08 - Phishing.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.09 - Defacing.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.04 - Client-Side Attacks/03.04.10 - Cross-Site Scripting/03.04.10.02 - Discovery.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.05 - Authentication & Access Control",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.05 - Authentication & Access Control/03.05.01 - Authentication and Access Control Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.05 - Authentication & Access Control/03.05.02 - HTTP Verb Tampering.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.05 - Authentication & Access Control/03.05.03 - Identifying IDOR.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.05 - Authentication & Access Control/03.05.04 - Mass IDOR Enumeration.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.05 - Authentication & Access Control/03.05.05 - PHP Type Juggling.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.06 - API Attacks/03.06.01 - API Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.06 - API Attacks/03.06.03 - Web Mass Assignment Vulnerabilities.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.06 - API Attacks/03.06.02 - IDOR in Insecure APIs.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.06 - API Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.07 - Server-Side Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "03 - Web Application Attacks/03.07 - Server-Side Attacks/03.07.01 - Server-Side Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.01 - Exploitation Methodology",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.01 - Exploitation Methodology/04.01.01 - Exploitation Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.01 - Exploitation Methodology/04.01.02 - Exploit Attempt Tracking.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.01 - Exploitation Methodology/04.01.03 - From Vulnerability to Access.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.01 - Exploitation Methodology/04.01.04 - Exploitation Troubleshooting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.01 - Service Exploitation Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.02 - Interacting with Common Services.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.04 - SMB.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.03 - FTP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.05 - SQL.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.07 - Email Services.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.06 - RDP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.02 - Service Exploitation/04.02.08 - DNS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.01 - Application Exploitation Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.02 - Application Discovery.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.03 - Applications Connecting to Services.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.04 - CGI Shellshock.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.05 - Tomcat.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.06 - Tomcat CGI.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.07 - Jenkins.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.08 - GitLab.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.09 - WordPress.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.10 - Joomla.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.11 - Drupal.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.12 - ColdFusion.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.13 - Splunk.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.14 - PRTG Network Monitor.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.15 - SaltStack.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.16 - Weblate.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.17 - osTicket.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.18 - LDAP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.19 - IIS Tilde.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.20 - React2Shell.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.21 - Thick Client Applications.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.22 - Web Mass Assignment Vulnerabilities.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.03 - Application Exploitation/04.03.23 - Other Notable Apps.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.04 - Shells",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.05 - Web Shells",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.04 - Shells/04.04.01 - Shells Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.04 - Shells/04.04.03 - Bind Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.04 - Shells/04.04.04 - PowerShell Reverse Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.04 - Shells/04.04.03 - Reverse Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.04 - Shells/04.04.05 - Interactive Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.05 - Web Shells/04.05.01 - Web Shells Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.05 - Web Shells/04.05.02 - PHP Web Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.05 - Web Shells/04.05.03 - Antak Web Shell.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery/04.06.01 - Payloads and Exploit Delivery Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery/04.06.02 - Payload Selection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery/04.06.03 - Payload Generation Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery/04.06.04 - MSFVenom.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery/04.06.06 - Metasploit Delivery.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery/04.06.05 - Laudanum.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.06 - Payloads & Delivery/04.06.07 - Payload Delivery Methods.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.01 - File Transfers Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.05 - Using Code.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.02 - Linux File Transfers.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.03 - Windows File Transfers.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.04 - LOLBins & GTFOBins.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.07 - Evading Detection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.06 - Protected Files.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.07 - File Transfers/04.07.08 - Miscellaneous.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.01 - Metasploit Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.02 - Modules.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.03 - Targets.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.04 - Payloads.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.05 - MSFVenom.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.06 - Sessions.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.07 - Meterpreter.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.08 - Meterpreter Commands.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.09 - Databases.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.10 - Plugins.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "04 - Exploitation & Initial Access/04.08 - Metasploit/04.08.11 - Writing and Importing Modules.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.10 - Users Groups and Sudo",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.20 - File and Permission Abuse",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.30 - Scheduled Tasks and Automation",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.40 - Services Processes and Internals",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.50 - Library and Path Hijacking",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.10 - Users Groups and Sudo/05.01.10.01 - Privileged Groups.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.10 - Users Groups and Sudo/05.01.10.03 - Sudo Rights Abuse.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.10 - Users Groups and Sudo/05.01.10.02 - Sudo.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.10 - Users Groups and Sudo/05.01.10.04 - Editing passwd File.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.20 - File and Permission Abuse/05.01.20.01 - Capabilities.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.20 - File and Permission Abuse/05.01.20.02 - Special Permissions - SUID and SGID.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.20 - File and Permission Abuse/05.01.20.03 - NFS and Tmux.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.20 - File and Permission Abuse/05.01.20.04 - Wildcard Abuse.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.30 - Scheduled Tasks and Automation/05.01.30.02 - Logrotate.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.30 - Scheduled Tasks and Automation/05.01.30.01 - Cron Job Abuse.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.30 - Scheduled Tasks and Automation/05.01.30.03 - Git Hooks via Ruby.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.40 - Services Processes and Internals/05.01.40.01 - Services and Internals.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.40 - Services Processes and Internals/05.01.40.02 - Vulnerable Services.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.40 - Services Processes and Internals/05.01.40.03 - Node.js Inspector Debug Port Abuse.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.50 - Library and Path Hijacking/05.01.50.01 - Path Abuse.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.50 - Library and Path Hijacking/05.01.50.02 - Python Library Hijacking.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.50 - Library and Path Hijacking/05.01.50.03 - Shared Libraries.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.50 - Library and Path Hijacking/05.01.50.04 - Shared Object Hijacking.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.60 - Containers and Orchestration",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.70 - Restricted Shells and TTY",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.80 - Kernel and System Exploits",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.60 - Containers and Orchestration/05.01.60.01 - Docker.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.60 - Containers and Orchestration/05.01.60.02 - LXD.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.60 - Containers and Orchestration/05.01.60.03 - Kubernetes.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.70 - Restricted Shells and TTY/05.01.70.01 - Escaping Restricted Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.80 - Kernel and System Exploits/05.01.80.01 - Kernel Exploits.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.80 - Kernel and System Exploits/05.01.80.02 - Dirty Pipe.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.80 - Kernel and System Exploits/05.01.80.03 - Netfilter.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.02 - Enumeration.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.01 - Linux Privilege Escalation Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.01 - Linux/05.01.03 - Credential Hunting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.10 - Enumeration and Situational Awareness",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.20 - Credentials and Loot",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.30 - Privileges and Token Abuse",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.40 - Groups and Built-in Roles",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.10 - Enumeration and Situational Awareness/05.02.10.01 - Initial Enumeration.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.10 - Enumeration and Situational Awareness/05.02.10.02 - Situational Awareness.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.10 - Enumeration and Situational Awareness/05.02.10.03 - Privileges Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.20 - Credentials and Loot/05.02.20.01 - Credential Hunting and Pillaging.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.20 - Credentials and Loot/05.02.20.02 - PowerShell History.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.20 - Credentials and Loot/05.02.20.03 - User Interaction Credential Capture.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.30 - Privileges and Token Abuse/05.02.30.01 - SeImpersonate and SeAssignPrimaryToken.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.30 - Privileges and Token Abuse/05.02.30.02 - SeDebugPrivilege.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.30 - Privileges and Token Abuse/05.02.30.03 - SeTakeOwnershipPrivilege.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.30 - Privileges and Token Abuse/05.02.30.04 - Backup Operators and SeBackupPrivilege.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.30 - Privileges and Token Abuse/05.02.30.05 - Restoring LOCAL SERVICE Privileges.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.30 - Privileges and Token Abuse/05.02.30.06 - JuicyPotato.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.40 - Groups and Built-in Roles/05.02.40.01 - DnsAdmins.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.40 - Groups and Built-in Roles/05.02.40.02 - Event Log Readers.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.40 - Groups and Built-in Roles/05.02.40.03 - Hyper-V Admins.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.40 - Groups and Built-in Roles/05.02.40.04 - Print Operators.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.40 - Groups and Built-in Roles/05.02.40.05 - Server Operators.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.50 - Services Processes and Named Pipes",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.60 - Service and DLL Hijacking",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.70 - Scheduled Tasks and Weak Permissions",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.80 - UAC and Desktop Breakouts",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.90 - Legacy Systems and Kernel Exploits",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.50 - Services Processes and Named Pipes/05.02.50.01 - Processes Network Services and Named Pipes.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.50 - Services Processes and Named Pipes/05.02.50.02 - Vulnerable Services.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.60 - Service and DLL Hijacking/05.02.60.01 - Service Binary Hijacking.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.60 - Service and DLL Hijacking/05.02.60.02 - Unquoted Service Paths.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.60 - Service and DLL Hijacking/05.02.60.03 - DLL Hijacking and Injection.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.70 - Scheduled Tasks and Weak Permissions/05.02.70.01 - Scheduled Task Hijacking.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.70 - Scheduled Tasks and Weak Permissions/05.02.70.02 - Weak Permissions.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.80 - UAC and Desktop Breakouts/05.02.80.01 - User Account Control - UAC.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.80 - UAC and Desktop Breakouts/05.02.80.02 - Citrix Breakout.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.90 - Legacy Systems and Kernel Exploits/05.02.90.01 - Legacy Desktops.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.90 - Legacy Systems and Kernel Exploits/05.02.90.02 - Legacy Servers.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.90 - Legacy Systems and Kernel Exploits/05.02.90.03 - Kernel Exploits.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.99 - Tools and Miscellaneous",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.99 - Tools and Miscellaneous/05.02.99.01 - Useful Tools.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.99 - Tools and Miscellaneous/05.02.99.02 - Miscellaneous Techniques.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "05 - Privilege Escalation/05.02 - Windows/05.02.01 - Windows Privilege Escalation Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.02 - Credential Hunting",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "06 - Credential Attacks/06.03 - Hashes & Cracking",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "06 - Credential Attacks/06.04 - Password Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "06 - Credential Attacks/06.06 - Credential Reuse",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "06 - Credential Attacks/06.02 - Credential Hunting/06.02.01 - Credential Hunting in Linux.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.02 - Credential Hunting/06.02.02 - Credential Hunting in Windows.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.02 - Credential Hunting/06.02.03 - Credential Hunting in Network Shares.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.02 - Credential Hunting/06.02.04 - Credential Hunting in Network Traffic.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.03 - Hashes & Cracking/06.03.01 - Cracking NTLM Hashes.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.03 - Hashes & Cracking/06.03.02 - Cracking Net-NTLMv2.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.03 - Hashes & Cracking/06.03.03 - Protected Archives.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.03 - Hashes & Cracking/06.03.04 - SSH Passphrase Cracking.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.04 - Password Attacks/06.04.01 - Spraying Stuffing and Defaults.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.01 - Credential and Password Attacks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.06 - Credential Reuse/06.06.06 - Pass the Certificate.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.06 - Credential Reuse/06.06.05 - Pass the Ticket from Windows.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.06 - Credential Reuse/06.06.04 - Pass the Ticket from Linux.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.06 - Credential Reuse/06.06.03 - Passing NTLM.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.06 - Credential Reuse/06.06.02 - Pass the Hash.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.06 - Credential Reuse/06.06.01 - Authenticated Remote Services.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage/06.05.07 - Linux Authentication.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage/06.05.05 - Attacking LSASS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage/06.05.06 - SAM SYSTEM and SECURITY.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage/06.05.04 - Active Directory and NTDS.dit.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage/06.05.03 - Windows Credential Manager.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage/06.05.02 - Protected Files.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.05 - Credential Storage/06.05.01 - Password Managers.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.04 - Password Attacks/06.04.04 - Attacking SSH With Hydra.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.04 - Password Attacks/06.04.03 - Custom Wordlists and Rules.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "06 - Credential Attacks/06.04 - Password Attacks/06.04.02 - Default Credentials.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.02 - Enumeration",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "07 - Active Directory/07.03 - Password Policies & Spraying",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "07 - Active Directory/07.04 - Poisoning & Relay",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "07 - Active Directory/07.05 - Security Controls",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "07 - Active Directory/07.06 - Credential & Kerberos Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "07 - Active Directory/07.02 - Enumeration/07.02.01 - Active Directory Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.07 - Lateral Movement",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "07 - Active Directory/07.06 - Credential & Kerberos Attacks/07.06.06 - DCSync Attacks.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.06 - Credential & Kerberos Attacks/07.06.05 - Silver Tickets.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.06 - Credential & Kerberos Attacks/07.06.04 - Kerberoasting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.06 - Credential & Kerberos Attacks/07.06.03 - AS-REP Roasting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.06 - Credential & Kerberos Attacks/07.06.02 - Password Spraying.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.06 - Credential & Kerberos Attacks/07.06.01 - Cached Credentials and Mimikatz.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.05 - Security Controls/07.05.02 - Enumerating Security Controls.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.05 - Security Controls/07.05.01 - AD Security Controls Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.04 - Poisoning & Relay/07.04.03 - LLMNR and NBT-NS Poisoning from Windows.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.04 - Poisoning & Relay/07.04.02 - LLMNR and NBT-NS Poisoning from Linux.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.04 - Poisoning & Relay/07.04.01 - LLMNR NBT-NS and Poisoning Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.03 - Password Policies & Spraying/07.03.05 - Internal Password Spraying from Windows.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.03 - Password Policies & Spraying/07.03.04 - Internal Password Spraying from Linux.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.03 - Password Policies & Spraying/07.03.03 - Password Spraying - Making a Target List.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.03 - Password Policies & Spraying/07.03.02 - Enumerating and Retrieving Password Policies.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.03 - Password Policies & Spraying/07.03.01 - Password Spraying Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.02 - Enumeration/07.02.06 - Automated with Sharphound and Bloodhound.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.02 - Enumeration/07.02.05 - Further Manual Enumeration.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.02 - Enumeration/07.02.04 - Manual Enumeration with PowerView.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.02 - Enumeration/07.02.03 - Manual Enumeration Foundations.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.02 - Enumeration/07.02.02 - AD Manual Enumeration Checklist.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.07 - Lateral Movement/07.07.01 - WMI and WinRM.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.07 - Lateral Movement/07.07.02 - PSExec.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.07 - Lateral Movement/07.07.03 - Pass The Hash (PtH).md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.07 - Lateral Movement/07.07.04 - Overpass The Hash.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.07 - Lateral Movement/07.07.05 - Pass The Ticket.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "07 - Active Directory/07.01 - Active Directory Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.05 - Exploitation & Shells",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.01 - Tools and Quick Commands Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.06 - Utilities/10.06.03 - venv.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.06 - Utilities/10.06.01 - proxychains.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.06 - Utilities/10.06.02 - Privilege Escalation.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.06 - Utilities",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.05 - Exploitation & Shells/10.05.05 - Stable Shell.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.05 - Exploitation & Shells/10.05.04 - SSH.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.05 - Exploitation & Shells/10.05.03 - Shellter.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.05 - Exploitation & Shells/10.05.02 - MSFVenom Reverse Shells.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.05 - Exploitation & Shells/10.05.01 - Metasploit.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.04 - Password Attacks/10.04.03 - Hydra.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.04 - Password Attacks/10.04.02 - John The Ripper.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.04 - Password Attacks/10.04.01 - Hashcat.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.04 - Password Attacks",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.01 - smbclient.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.06 - Responder.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.08 - Kerbrute.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.07 - Inveigh.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.05 - Impacket.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.04 - CrackMapExec.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.03 - xfreerdp3.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.02 - Evil-WinRM.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration/10.02.05 - Gobuster.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration/10.02.04 - Ffuf.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration/10.02.03 - rpcclient.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration/10.02.02 - enum4linux-ng.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration/10.02.01 - NMAP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "09 - Post Exploitation & Evasion/09.02 - AV Evasion.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "09 - Post Exploitation & Evasion/09.01 - Evasion and Bypasses Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.02 - Internal Network Enumeration Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.01 - Pivoting and Internal Networks Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.06 - Covert Tunnelling/08.06.04 - ICMP Tunnelling with SOCKS.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.06 - Covert Tunnelling/08.06.03 - DNS Tunneling with Dnscat2.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.06 - Covert Tunnelling/08.06.02 - DNS Tunnelling Fundamentals.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.06 - Covert Tunnelling/08.06.01 - Tunnelling Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.06 - Covert Tunnelling",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.09 - Web Server Pivoting with Rpivot.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.08 - Pivoting Tools and Miscellaneous Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.07 - Socat Redirection with a Bind Shell.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.06 - Socat Pivoting with a Reverse Shell.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.05 - Port Forwarding with SOCAT.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.04 - Socat and Port Redirection Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.03 - HTTP Tunnelling with Chisel.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.02 - SOCKS Tunnelling with Chisel.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection/08.05.01 - SOCKS and Proxy Pivoting Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.05 - Proxying & Port Redirection",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.08 - RDP and SOCKS Tunnelling with SocksOverRDP.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.07 - Meterpreter Pivoting and Port Forwarding.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.06 - Meterpreter Pivoting Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.05 - Plink Remote Port Forwarding.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.04 - SSH Port Forwarding on Windows.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.03 - Plink Pivoting - SSH for Windows.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.02 - Port Forwarding with Windows - Netsh.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting/08.04.01 - Windows Pivoting Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.04 - Windows Pivoting",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.01 - SSH Pivoting Overview.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.04 - SSH Reverse Port Forwarding.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.05 - SSH Dynamic Port Forwarding.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.07 - SSH Socks Pivoting.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.06 - SSH Remote Dynamic Port Forwarding.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.08 - SSH Pivoting with Sshuttle.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.03 - SSH Remote Port Forwarding.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "08 - Pivoting & Tunnelling/08.03 - SSH Pivoting/08.03.02 - SSH Local Port Forwarding.md",
+      "color": "W3rbf8NYDKjNckRCXk0u_"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template",
+      "color": "1sTFxjEVgSfPBD7CWLdvp"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/00 - Overview",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/01 - Enumeration",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/02 - Findings & Attack Paths",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/03 - Exploitation & Access",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/04 - Privilege Escalation",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/05 - Loot & Evidence",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/06 - Scripts & Payloads",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    },
+    {
+      "path": "99 - Templates/99.10 - Pen Test Note Template/07 - Writeup",
+      "color": "QFrLiwimtqJp_seXT_Jth"
+    }
+  ]
+}
