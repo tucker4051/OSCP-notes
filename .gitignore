@@ -1,2 +1,5 @@
 # Keep gitignore itself
 !/.gitignore
+
+# Ignore obsidian
+/.obsidian

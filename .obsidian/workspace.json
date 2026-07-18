@@ -124,13 +124,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration/10.02.02 - enum4linux-ng.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of 10.02.02 - enum4linux-ng"
+              "title": "Outline"
             }
           },
           {
@@ -184,8 +183,9 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "03f7586c86a07ac3",
+  "active": "5971856b5964c786",
   "lastOpenFiles": [
+    "10 - Tools & Quick Commands/10.02 - Scanning & Enumeration/10.02.02 - enum4linux-ng.md",
     "01 - Reconnaissance & Enumeration/01.03 - Network Services/01.03.03 - IPMI.md",
     "00 - Start Here/00.01 - Pentest Workflow.md",
     "00 - Start Here/00.02 - CTF Box Methodology.md",
@@ -211,7 +211,6 @@
     "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.07 - Inveigh.md",
     "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.05 - Impacket.md",
     "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.04 - CrackMapExec.md",
-    "10 - Tools & Quick Commands/10.03 - Windows & Active Directory/10.03.03 - xfreerdp3.md",
     "99 - Templates/99.10 - Pen Test Note Template/07 - Writeup",
     "99 - Templates/99.10 - Pen Test Note Template/06 - Scripts & Payloads",
     "99 - Templates/99.10 - Pen Test Note Template/05 - Loot & Evidence",
