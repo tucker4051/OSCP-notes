@@ -1,9 +1,5 @@
 # Penetration Testing Knowledge Book
 
-$securePass = ConvertTo-SecureString 'qazwsx' -AsPlainText -Force
-$cred = New-Object System.Management.Automation.PSCredential('oscp.exam\svc_mssql', $securePass)
-Start-Process powershell.exe -Credential $cred -NoNewWindow
-
 A structured collection of penetration testing, offensive security, and lab reference notes maintained in Markdown.
 
 This repository is designed as a practical knowledge base for penetration testing study, certification preparation, security labs, CTFs, and authorised security assessments. The notes focus on repeatable methodology, technical concepts, enumeration techniques, exploitation workflows, privilege escalation, Active Directory, pivoting, credential attacks, and commonly used tools.
